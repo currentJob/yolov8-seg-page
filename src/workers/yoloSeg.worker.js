@@ -1,7 +1,9 @@
 import * as ort from "onnxruntime-web";
 
 // const MODEL_URL = `${import.meta.env.BASE_URL}models/yolov8-seg.onnx`;
-const MODEL_URL = `${import.meta.env.BASE_URL}releases/download/v1.0.0/yolov8-seg.onnx`;
+const MODEL_URL =
+  "https://github.com/currentJob/yolov8-seg-page/releases/download/v1.0.0/yolov8-seg.onnx";
+
 const INPUT_SIZE = 960;
 const CLASS_NAMES = ["object"];
 
