@@ -10,7 +10,6 @@ lerna-debug.log*
 node_modules
 
 # Large model files
-public/models/*.onnx
 dist
 dist-ssr
 *.local
