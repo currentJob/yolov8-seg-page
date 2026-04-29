@@ -1,4 +1,5 @@
 import * as ort from "onnxruntime-web";
+import { normalizedByteToFloat16, tensorDataToFloat32 } from "../lib/float16.js";
 
 const MODEL_URL = `${import.meta.env.BASE_URL}models/yolov8-seg-half.onnx`;
 const INPUT_SIZE = 960;
@@ -68,23 +69,23 @@ function imageToTensor(bitmap) {
   ctx.drawImage(bitmap, letterbox.padX, letterbox.padY, letterbox.newW, letterbox.newH);
 
   const imageData = ctx.getImageData(0, 0, INPUT_SIZE, INPUT_SIZE).data;
-  const tensorData = new Float32Array(1 * 3 * INPUT_SIZE * INPUT_SIZE);
+  const tensorData = new Uint16Array(1 * 3 * INPUT_SIZE * INPUT_SIZE);
   const area = INPUT_SIZE * INPUT_SIZE;
 
   for (let index = 0; index < area; index += 1) {
-    tensorData[index] = imageData[index * 4] / 255;
-    tensorData[area + index] = imageData[index * 4 + 1] / 255;
-    tensorData[area * 2 + index] = imageData[index * 4 + 2] / 255;
+    tensorData[index] = normalizedByteToFloat16(imageData[index * 4]);
+    tensorData[area + index] = normalizedByteToFloat16(imageData[index * 4 + 1]);
+    tensorData[area * 2 + index] = normalizedByteToFloat16(imageData[index * 4 + 2]);
   }
 
   return {
-    tensor: new ort.Tensor("float32", tensorData, [1, 3, INPUT_SIZE, INPUT_SIZE]),
+    tensor: new ort.Tensor("float16", tensorData, [1, 3, INPUT_SIZE, INPUT_SIZE]),
     letterbox,
   };
 }
 
 function parseDetections(output, imgW, imgH, letterbox, settings) {
-  const data = output.data;
+  const data = tensorDataToFloat32(output);
   const [, channels, anchors] = output.dims;
   const classCount = channels - 4 - 32;
   const detections = [];
@@ -141,11 +142,10 @@ function findProtoOutput(outputs) {
   return Object.values(outputs).find((tensor) => tensor.dims.length === 4 && tensor.dims[1] === 32);
 }
 
-function drawMask(ctx, detection, proto, imgW, imgH, letterbox, maskThreshold) {
-  if (!proto) return;
+function drawMask(ctx, detection, protoData, protoDims, imgW, imgH, letterbox, maskThreshold) {
+  if (!protoData || !protoDims) return;
 
-  const [, maskDim, protoH, protoW] = proto.dims;
-  const protoData = proto.data;
+  const [, maskDim, protoH, protoW] = protoDims;
   const x1 = Math.floor(detection.x1);
   const y1 = Math.floor(detection.y1);
   const x2 = Math.ceil(detection.x2);
@@ -184,11 +184,13 @@ function drawMask(ctx, detection, proto, imgW, imgH, letterbox, maskThreshold) {
 function drawResult(bitmap, detections, proto, letterbox, settings) {
   const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
   const ctx = canvas.getContext("2d");
+  const protoData = proto ? tensorDataToFloat32(proto) : null;
+  const protoDims = proto?.dims;
 
   ctx.drawImage(bitmap, 0, 0);
 
   for (const detection of detections) {
-    drawMask(ctx, detection, proto, bitmap.width, bitmap.height, letterbox, settings.mask);
+    drawMask(ctx, detection, protoData, protoDims, bitmap.width, bitmap.height, letterbox, settings.mask);
   }
 
   for (const detection of detections) {
