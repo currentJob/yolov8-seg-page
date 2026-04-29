@@ -6,3 +6,4 @@ export default defineConfig({
   plugins: [react()],
   base: '/yolov8-seg-page/'
 })
+1
