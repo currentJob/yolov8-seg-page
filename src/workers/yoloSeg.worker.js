@@ -1,12 +1,12 @@
 import * as ort from "onnxruntime-web";
 import { normalizedByteToFloat16, tensorDataToFloat32 } from "../lib/float16.js";
 
-const MODEL_URL = `${import.meta.env.BASE_URL}models/yolov8-seg-half.onnx`;
 const INPUT_SIZE = 960;
 const CLASS_NAMES = ["object"];
 
 let session = null;
 let sessionPromise = null;
+let currentModelName = null;
 
 function post(id, payload) {
   self.postMessage({ id, ...payload });
@@ -227,21 +227,31 @@ function validatePrimaryOutput(output) {
   }
 }
 
-async function loadModel(id) {
-  if (session) {
+async function loadModel(id, modelName = "yolov8-seg-half.onnx") {
+  const targetUrl = `${import.meta.env.BASE_URL}models/${modelName}`;
+
+  if (session && currentModelName === modelName) {
     if (id !== undefined) post(id, { type: "loaded" });
     return;
   }
 
-  if (sessionPromise) {
+  if (sessionPromise && currentModelName === modelName) {
     await sessionPromise;
     if (id !== undefined) post(id, { type: "loaded" });
     return;
   }
 
+  // 이전 모델 로딩이 진행 중이라면 완료될 때까지 기다립니다.
+  if (sessionPromise) {
+    try { await sessionPromise; } catch (e) {}
+  }
+
+  session = null;
+  currentModelName = modelName;
+
   sessionPromise = (async () => {
     ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/";
-    session = await ort.InferenceSession.create(MODEL_URL, {
+    session = await ort.InferenceSession.create(targetUrl, {
       executionProviders: ["wasm"],
       graphOptimizationLevel: "all",
     });
@@ -249,6 +259,10 @@ async function loadModel(id) {
 
   try {
     await sessionPromise;
+  } catch (err) {
+    sessionPromise = null;
+    currentModelName = null;
+    throw err;
   } finally {
     sessionPromise = null;
   }
@@ -256,12 +270,12 @@ async function loadModel(id) {
   if (id !== undefined) post(id, { type: "loaded" });
 }
 
-async function runImage(id, bitmap, settings) {
-  if (!session) {
-    if (sessionPromise) {
+async function runImage(id, bitmap, settings, modelName = "yolov8-seg-half.onnx") {
+  if (!session || currentModelName !== modelName) {
+    if (sessionPromise && currentModelName === modelName) {
       await sessionPromise;
     } else {
-      await loadModel();
+      await loadModel(undefined, modelName);
     }
   }
 
@@ -302,11 +316,11 @@ async function runImage(id, bitmap, settings) {
 }
 
 self.onmessage = async (event) => {
-  const { id, type, file, bitmap, settings } = event.data;
+  const { id, type, file, bitmap, settings, modelName } = event.data;
 
   try {
     if (type === "load") {
-      await loadModel(id);
+      await loadModel(id, modelName);
       return;
     }
 
@@ -319,7 +333,7 @@ self.onmessage = async (event) => {
       
       if (!targetBitmap) throw new Error("분석할 이미지가 없습니다.");
       
-      await runImage(id, targetBitmap, settings);
+      await runImage(id, targetBitmap, settings, modelName);
     }
   } catch (error) {
     post(id, {

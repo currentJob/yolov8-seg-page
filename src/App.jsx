@@ -108,11 +108,12 @@ export default function App() {
     }
   });
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [selectedModel, setSelectedModel] = useState("yolov8-seg-half.onnx");
   const [history, setHistory] = useState([]);
   const [isComparing, setIsComparing] = useState(false);
   const [compareRatio, setCompareRatio] = useState(0.5);
   
-  const yolo = useYoloSeg(canvasRef, settings);
+  const yolo = useYoloSeg(canvasRef, settings, selectedModel);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -199,6 +200,18 @@ export default function App() {
               <span className={`status-pill ${yolo.runtime.phase}`}>
                 {yolo.runtime.phase}
               </span>
+            </div>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Model Selection</label>
+              <select 
+                style={{ width: '100%', background: 'var(--bg)', color: 'var(--text-strong)', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '13px', outline: 'none', cursor: 'pointer' }}
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                disabled={yolo.isBusy}
+              >
+                <option value="yolov8-seg-half.onnx">YOLOv8-Seg Half (Fast)</option>
+                <option value="yolov8-seg.onnx">YOLOv8-Seg (Accurate)</option>
+              </select>
             </div>
             <button 
               className={`btn btn-primary w-full ${yolo.runtime.phase === "loading" ? "btn-loading" : ""}`} 
