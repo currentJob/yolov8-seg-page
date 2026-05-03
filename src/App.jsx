@@ -108,15 +108,7 @@ export default function App() {
     }
   });
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-  const [history, setHistory] = useState(() => {
-    try {
-      const saved = localStorage.getItem("yolo-history");
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      console.error("Failed to load history", e);
-      return [];
-    }
-  });
+  const [history, setHistory] = useState([]);
   const [isComparing, setIsComparing] = useState(false);
   const [compareRatio, setCompareRatio] = useState(0.5);
   
@@ -160,18 +152,10 @@ export default function App() {
               imageSize: yolo.runtime.imageSize
             }, ...filtered].slice(0, 8);
             
-            try {
-              localStorage.setItem("yolo-history", JSON.stringify(next));
-            } catch (e) {
-              console.warn("Storage full, clearing oldest history", e);
-              // 용량 초과 시 히스토리 개수 줄여서 재시도
-              const reduced = next.slice(0, 3);
-              localStorage.setItem("yolo-history", JSON.stringify(reduced));
-            }
             return next;
           });
         } catch (err) {
-          console.error("Failed to save history item", err);
+          console.error("Failed to add history item", err);
         }
       }
     }
