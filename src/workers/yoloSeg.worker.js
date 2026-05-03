@@ -109,7 +109,7 @@ function parseDetections(output, imgW, imgH, letterbox, settings) {
     }
 
     const prob = sigmoid(bestScore);
-    if (prob < settings.confidence) continue;
+    if (prob < settings.confidenceThreshold) continue;
 
     const x1Model = cx - width / 2;
     const y1Model = cy - height / 2;
@@ -137,7 +137,7 @@ function parseDetections(output, imgW, imgH, letterbox, settings) {
     });
   }
 
-  return nms(detections, settings.iou);
+  return nms(detections, settings.iouThreshold);
 }
 
 function findProtoOutput(outputs) {
@@ -192,7 +192,7 @@ function drawResult(bitmap, detections, proto, letterbox, settings) {
   ctx.drawImage(bitmap, 0, 0);
 
   for (const detection of detections) {
-    drawMask(ctx, detection, protoData, protoDims, bitmap.width, bitmap.height, letterbox, settings.mask);
+    drawMask(ctx, detection, protoData, protoDims, bitmap.width, bitmap.height, letterbox, settings.maskThreshold || 0.5);
   }
 
   for (const detection of detections) {

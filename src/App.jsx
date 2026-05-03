@@ -10,11 +10,13 @@ import "./App.css";
 const DEFAULT_SETTINGS = {
   confidenceThreshold: 0.25,
   iouThreshold: 0.45,
+  maskThreshold: 0.5,
 };
 
 const sliderMeta = [
   { key: "confidenceThreshold", label: "Confidence", min: 0.1, max: 1.0, step: 0.01 },
   { key: "iouThreshold", label: "IoU", min: 0.1, max: 1.0, step: 0.01 },
+  { key: "maskThreshold", label: "Mask", min: 0.1, max: 1.0, step: 0.01 },
 ];
 
 export default function App() {
