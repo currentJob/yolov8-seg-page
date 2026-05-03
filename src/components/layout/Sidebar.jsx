@@ -24,30 +24,15 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
           </div>
           <div style={{ marginBottom: '16px' }}>
             <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Model Selection</label>
-            <div className="flex bg-[var(--bg)] border border-[var(--border)] rounded-lg p-1 gap-1">
-              <button
-                className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-md transition-all ${
-                  selectedModel === "yolov8-seg-half.onnx"
-                    ? "bg-[var(--surface)] text-[var(--accent)] shadow-sm border border-[var(--border)]"
-                    : "text-[var(--text-muted)] hover:text-[var(--text-strong)] border border-transparent"
-                }`}
-                onClick={() => setSelectedModel("yolov8-seg-half.onnx")}
-                disabled={yolo.isBusy}
-              >
-                Fast (FP16)
-              </button>
-              <button
-                className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-md transition-all ${
-                  selectedModel === "yolov8-seg.onnx"
-                    ? "bg-[var(--surface)] text-[var(--accent)] shadow-sm border border-[var(--border)]"
-                    : "text-[var(--text-muted)] hover:text-[var(--text-strong)] border border-transparent"
-                }`}
-                onClick={() => setSelectedModel("yolov8-seg.onnx")}
-                disabled={yolo.isBusy}
-              >
-                Accurate (FP32)
-              </button>
-            </div>
+            <select
+              className="w-full bg-[var(--bg)] text-[var(--text-strong)] border border-[var(--border)] rounded-lg px-3 py-2 text-[13px] outline-none cursor-pointer focus:border-[var(--accent)] transition-colors"
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              disabled={yolo.isBusy}
+            >
+              <option value="yolov8-seg-half.onnx">YOLOv8-Seg Half (Fast / FP16)</option>
+              <option value="yolov8-seg.onnx">YOLOv8-Seg (Accurate / FP32)</option>
+            </select>
           </div>
           <button 
             className={`btn btn-primary w-full ${yolo.runtime.phase === "loading" ? "btn-loading" : ""}`} 
