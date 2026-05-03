@@ -23,16 +23,25 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
             </span>
           </div>
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Model Selection</label>
-            <select
-              className="w-full bg-[var(--bg)] text-[var(--text-strong)] border border-[var(--border)] rounded-lg px-3 py-2 text-[13px] outline-none cursor-pointer focus:border-[var(--accent)] transition-colors"
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              disabled={yolo.isBusy}
-            >
-              <option value="yolov8-seg-half.onnx">YOLOv8-Seg Half (Fast / FP16)</option>
-              <option value="yolov8-seg.onnx">YOLOv8-Seg (Accurate / FP32)</option>
-            </select>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Model Selection
+            </label>
+            <div className="relative group">
+              <select
+                className="w-full appearance-none bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--text-strong)] border border-[var(--border)] rounded-lg pl-3 pr-10 py-2.5 text-[13px] outline-none cursor-pointer focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all shadow-sm"
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                disabled={yolo.isBusy}
+              >
+                <option value="yolov8-seg-half.onnx">YOLOv8-Seg Half (Fast / FP16)</option>
+                <option value="yolov8-seg.onnx">YOLOv8-Seg (Accurate / FP32)</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-[var(--text-muted)] group-hover:text-[var(--text-strong)] transition-colors">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
           </div>
           <button 
             className={`btn btn-primary w-full ${yolo.runtime.phase === "loading" ? "btn-loading" : ""}`} 
@@ -42,7 +51,7 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
             <Icon name="layers" />
             {yolo.isReady ? "Reload Model" : "Load Model"}
           </button>
-          <p className="status-msg mt-3 text-xs opacity-60">{yolo.runtime.message}</p>
+          <p className={`status-msg mt-3 text-xs ${yolo.runtime.phase}`}>{yolo.runtime.message}</p>
         </section>
 
         <section className="panel-section stagger-3">
