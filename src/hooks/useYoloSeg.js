@@ -162,10 +162,6 @@ export function useYoloSeg(canvasRef, settings) {
         postWorkerMessage({ type: "load" });
       }
 
-      // ImageBitmap 생성 및 전송
-      const bitmap = await createImageBitmap(file);
-      setOriginalBitmap(bitmap);
-
       // 분석용 Worker 전송용 Bitmap (별도 생성)
       const workerBitmap = await createImageBitmap(file);
 

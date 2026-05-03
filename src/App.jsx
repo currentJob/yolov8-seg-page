@@ -46,7 +46,7 @@ function Dropzone({ disabled, isBusy, onFile, children, hasImage }) {
 
   return (
     <label
-      className={`dropzone ${isDragging ? "active" : ""} ${disabled ? "disabled" : ""} ${hasImage ? "dropzone-full" : ""}`}
+      className={`dropzone ${isDragging ? "active" : ""} ${disabled ? "disabled" : ""} ${hasImage ? "dropzone-full" : "dropzone-empty"}`}
       onDragEnter={() => setIsDragging(true)}
       onDragLeave={() => setIsDragging(false)}
       onDragOver={(event) => event.preventDefault()}
