@@ -203,15 +203,27 @@ export default function App() {
             </div>
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase' }}>Model Selection</label>
-              <select 
-                style={{ width: '100%', background: 'var(--bg)', color: 'var(--text-strong)', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', fontSize: '13px', outline: 'none', cursor: 'pointer' }}
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                disabled={yolo.isBusy}
-              >
-                <option value="yolov8-seg-half.onnx">YOLOv8-Seg Half (Fast)</option>
-                <option value="yolov8-seg.onnx">YOLOv8-Seg (Accurate)</option>
-              </select>
+              <div className="flex bg-[var(--bg)] border border-[var(--border)] rounded-lg p-1 gap-1">
+                <button
+                  className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-md transition-all ${
+                    selectedModel === "yolov8-seg-half.onnx"
+                      ? "bg-[var(--surface)] text-[var(--accent)] shadow-sm border border-[var(--border)]"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-strong)] border border-transparent"
+                  }`}
+                  onClick={() => setSelectedModel("yolov8-seg-half.onnx")}
+                  disabled={yolo.isBusy}
+                >
+                  Fast (FP16)
+                </button>
+                <button
+                  className={`flex-1 py-1.5 px-2 text-[11px] font-semibold rounded-md transition-all flex items-center justify-center gap-1 opacity-50 cursor-not-allowed border border-transparent text-[var(--text-muted)]`}
+                  disabled
+                  title="현재 안정성 점검 중입니다."
+                >
+                  <span>Accurate</span>
+                  <span className="bg-orange-500/20 text-orange-400 px-1 py-0.5 rounded text-[9px] leading-none">점검중</span>
+                </button>
+              </div>
             </div>
             <button 
               className={`btn btn-primary w-full ${yolo.runtime.phase === "loading" ? "btn-loading" : ""}`} 
