@@ -184,7 +184,7 @@
   gap: 12px;
 }
 
-.dropzone:hover:not(.disabled) {
+.dropzone-empty:hover:not(.disabled) {
   border-color: var(--accent);
   background: hsla(var(--accent-h), var(--accent-s), 50%, 0.05);
   transform: translateY(-2px);
@@ -209,7 +209,7 @@
   transition: all 0.3s ease;
 }
 
-.dropzone:hover .dropzone-icon {
+.dropzone-empty:hover .dropzone-icon {
   background: var(--accent);
   color: white;
   transform: scale(1.1);
