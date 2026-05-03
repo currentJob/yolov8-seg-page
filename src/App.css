@@ -479,6 +479,15 @@ input[type="range"]::-webkit-scrollbar-thumb {
   font-family: var(--display);
 }
 
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.2s ease-out forwards;
+}
+
 .empty-state {
   text-align: center;
   color: var(--text-muted);

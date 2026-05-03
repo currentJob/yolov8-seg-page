@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from "react";
 import { Icon } from "../ui/Icon";
 import { SettingsSlider } from "../ui/SettingsSlider";
 
@@ -5,7 +6,27 @@ function formatPercent(value) {
   return `${Math.round(value * 100)}%`;
 }
 
+const MODELS = [
+  { id: "yolov8-seg-half.onnx", name: "Fast Engine", desc: "FP16 / Speed Optimized", icon: "zap" },
+  { id: "yolov8-seg.onnx", name: "Accurate Engine", desc: "FP32 / Precision Focused", icon: "target" }
+];
+
 export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedModel, setSelectedModel }) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const activeModel = MODELS.find(m => m.id === selectedModel) || MODELS[0];
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <aside className="sidebar">
       <header className="sidebar-header">
@@ -22,6 +43,7 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
               {yolo.runtime.phase}
             </span>
           </div>
+          
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-2 px-1">
               <Icon name="layers" size={14} className="text-[var(--accent)]" />
@@ -29,23 +51,54 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
                 Model Engine
               </label>
             </div>
-            <div className="relative group">
-              <select
-                className="w-full appearance-none bg-[var(--surface-muted)] hover:bg-[var(--surface)] text-[var(--text-strong)] border border-[var(--border)] rounded-xl pl-4 pr-10 py-3 text-[13px] font-medium outline-none cursor-pointer focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-glow)] transition-all duration-300 shadow-sm group-hover:shadow-md"
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
+            
+            <div className="relative" ref={dropdownRef}>
+              <button
+                className={`w-full flex items-center justify-between bg-[var(--surface-muted)] hover:bg-[var(--surface)] text-[var(--text-strong)] border border-[var(--border)] rounded-xl px-4 py-3 transition-all duration-300 shadow-sm ${isDropdownOpen ? 'border-[var(--accent)] ring-4 ring-[var(--accent-glow)]' : ''}`}
+                onClick={() => !yolo.isBusy && setIsDropdownOpen(!isDropdownOpen)}
                 disabled={yolo.isBusy}
               >
-                <option value="yolov8-seg-half.onnx">YOLOv8-Seg (Speed Optimized)</option>
-                <option value="yolov8-seg.onnx">YOLOv8-Seg (Precision Focused)</option>
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
-                <div className="bg-[var(--surface)] p-1 rounded-md border border-[var(--border)] group-hover:border-[var(--accent)] transition-colors shadow-sm">
-                  <svg className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-                  </svg>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--surface)] flex items-center justify-center text-[var(--accent)] border border-[var(--border)]">
+                    <Icon name={activeModel.icon} size={16} />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-[13px] font-bold leading-tight">{activeModel.name}</div>
+                    <div className="text-[10px] text-[var(--text-muted)] leading-tight">{activeModel.desc}</div>
+                  </div>
                 </div>
-              </div>
+                <Icon name="chevron-down" size={16} className={`text-[var(--text-muted)] transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isDropdownOpen && (
+                <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-xl z-50 overflow-hidden animate-slide-down backdrop-blur-xl bg-opacity-90">
+                  {MODELS.map((model) => (
+                    <button
+                      key={model.id}
+                      className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--surface-muted)] transition-colors text-left ${selectedModel === model.id ? 'bg-[var(--surface-muted)]' : ''}`}
+                      onClick={() => {
+                        setSelectedModel(model.id);
+                        setIsDropdownOpen(false);
+                      }}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${selectedModel === model.id ? 'bg-[var(--accent)] text-white border-transparent' : 'bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)]'}`}>
+                        <Icon name={model.icon} size={16} />
+                      </div>
+                      <div>
+                        <div className={`text-[13px] font-bold ${selectedModel === model.id ? 'text-[var(--accent)]' : 'text-[var(--text-strong)]'}`}>
+                          {model.name}
+                        </div>
+                        <div className="text-[10px] text-[var(--text-muted)]">{model.desc}</div>
+                      </div>
+                      {selectedModel === model.id && (
+                        <div className="ml-auto text-[var(--accent)]">
+                          <Icon name="check" size={16} />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <button 
