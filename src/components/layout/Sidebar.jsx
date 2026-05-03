@@ -54,48 +54,54 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
             
             <div className="relative" ref={dropdownRef}>
               <button
-                className={`w-full flex items-center justify-between bg-[var(--surface-muted)] hover:bg-[var(--surface)] text-[var(--text-strong)] border border-[var(--border)] rounded-2xl px-4 py-3.5 transition-all duration-300 shadow-sm ${isDropdownOpen ? 'border-[var(--accent)] ring-4 ring-[var(--accent-glow)] bg-[var(--surface)]' : ''}`}
+                className={`w-full flex items-center justify-between transition-all duration-500 rounded-2xl px-4 py-3.5 border shadow-sm group/btn
+                  ${isDropdownOpen 
+                    ? 'bg-[var(--surface)] border-[var(--accent)] ring-4 ring-[var(--accent-glow)]' 
+                    : 'bg-[var(--surface-muted)] border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--surface)] hover:shadow-md'
+                  } text-[var(--text-strong)]`}
                 onClick={() => !yolo.isBusy && setIsDropdownOpen(!isDropdownOpen)}
                 disabled={yolo.isBusy}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 ${isDropdownOpen ? 'bg-[var(--accent)] text-white shadow-lg' : 'bg-[var(--surface)] text-[var(--accent)] border border-[var(--border)]'}`}>
-                    <Icon name={activeModel.icon} size={18} />
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 shadow-sm ${isDropdownOpen ? 'bg-[var(--accent)] text-white rotate-6 scale-110' : 'bg-[var(--surface)] text-[var(--accent)] border border-[var(--border)] group-hover/btn:scale-105'}`}>
+                    <Icon name={activeModel.icon} size={20} />
                   </div>
                   <div className="text-left">
-                    <div className="text-[13px] font-bold leading-none mb-1">{activeModel.name}</div>
-                    <div className="text-[10px] text-[var(--text-muted)] font-medium leading-none">{activeModel.desc}</div>
+                    <div className="text-[14px] font-extrabold leading-none mb-1.5">{activeModel.name}</div>
+                    <div className="text-[10px] text-[var(--text-muted)] font-semibold uppercase tracking-wider leading-none">{activeModel.desc}</div>
                   </div>
                 </div>
-                <Icon name="chevron-down" size={18} className={`text-[var(--text-muted)] transition-transform duration-500 ${isDropdownOpen ? 'rotate-180 text-[var(--accent)]' : ''}`} />
+                <Icon name="chevron-down" size={18} className={`text-[var(--text-muted)] transition-transform duration-500 ${isDropdownOpen ? 'rotate-180 text-[var(--accent)]' : 'group-hover/btn:text-[var(--accent)]'}`} />
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-[var(--surface)] border-2 border-[var(--border)] rounded-2xl shadow-2xl z-[100] overflow-hidden animate-slide-down backdrop-blur-2xl ring-1 ring-black/5">
-                  <div className="p-1.5">
+                <div className="absolute top-[calc(100%+10px)] left-0 right-0 bg-[var(--surface)] border-2 border-[var(--border)] rounded-2xl shadow-2xl z-[100] overflow-hidden animate-slide-down backdrop-blur-3xl bg-opacity-95 ring-1 ring-black/5">
+                  <div className="p-2">
                     {MODELS.map((model) => (
                       <button
                         key={model.id}
-                        className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 text-left mb-1 last:mb-0 ${selectedModel === model.id ? 'bg-[var(--accent)]/10' : 'hover:bg-[var(--surface-muted)]'}`}
+                        className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-300 text-left mb-1 last:mb-0 group/item ${selectedModel === model.id ? 'bg-[var(--accent)] text-white shadow-lg' : 'hover:bg-[var(--surface-muted)]'}`}
                         onClick={() => {
                           setSelectedModel(model.id);
                           setIsDropdownOpen(false);
                         }}
                       >
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${selectedModel === model.id ? 'bg-[var(--accent)] text-white' : 'bg-[var(--surface-muted)] text-[var(--text-muted)]'}`}>
-                          <Icon name={model.icon} size={16} />
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 flex-shrink-0 ${selectedModel === model.id ? 'bg-white/20 text-white' : 'bg-[var(--surface-muted)] text-[var(--accent)] group-hover/item:scale-110'}`}>
+                          <Icon name={model.icon} size={18} />
                         </div>
                         <div className="flex-1 flex items-center justify-between gap-3 overflow-hidden">
-                          <span className={`text-[13px] font-bold whitespace-nowrap ${selectedModel === model.id ? 'text-[var(--accent)]' : 'text-[var(--text-strong)]'}`}>
-                            {model.name}
-                          </span>
-                          <span className="text-[10px] text-[var(--text-muted)] font-medium whitespace-nowrap opacity-70">
-                            {model.desc}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className={`text-[13px] font-bold whitespace-nowrap transition-colors ${selectedModel === model.id ? 'text-white' : 'text-[var(--text-strong)] group-hover/item:text-[var(--accent)]'}`}>
+                              {model.name}
+                            </span>
+                            <span className={`text-[10px] font-medium whitespace-nowrap transition-colors ${selectedModel === model.id ? 'text-white/70' : 'text-[var(--text-muted)]'}`}>
+                              {model.desc}
+                            </span>
+                          </div>
                         </div>
                         {selectedModel === model.id && (
-                          <div className="text-[var(--accent)] flex-shrink-0">
-                            <Icon name="check" size={18} />
+                          <div className="text-white flex-shrink-0 animate-in zoom-in duration-300">
+                            <Icon name="check" size={20} />
                           </div>
                         )}
                       </button>
