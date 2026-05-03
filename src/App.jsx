@@ -37,11 +37,19 @@ function Dropzone({ disabled, isBusy, onFile, children, hasImage }) {
   const [isDragging, setIsDragging] = useState(false);
   const id = useId();
 
+  function handleFile(file) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      alert("이미지 파일만 업로드할 수 있습니다. (JPG, PNG 등 지원)");
+      return;
+    }
+    if (!disabled) onFile(file);
+  }
+
   function handleDrop(event) {
     event.preventDefault();
     setIsDragging(false);
-    const file = event.dataTransfer.files?.[0];
-    if (!disabled && file) onFile(file);
+    handleFile(event.dataTransfer.files?.[0]);
   }
 
   return (
@@ -58,7 +66,11 @@ function Dropzone({ disabled, isBusy, onFile, children, hasImage }) {
         type="file"
         accept="image/*"
         disabled={disabled}
-        onChange={(event) => onFile(event.target.files?.[0])}
+        onChange={(event) => {
+          handleFile(event.target.files?.[0]);
+          // 동일한 파일을 다시 선택할 수 있도록 value 초기화
+          event.target.value = null;
+        }}
         style={{ display: "none" }}
       />
       {children || (
@@ -346,8 +358,12 @@ export default function App() {
             ) : (
               <div className="empty-state">
                 <div className="empty-icon"><Icon name="zap" /></div>
-                <h3>AI 분석 준비 완료</h3>
-                <p>이미지를 클릭하여 업로드하거나 이곳으로 드래그해주세요.</p>
+                <h3>{yolo.isReady ? "AI 분석 준비 완료" : "모델 로드 필요"}</h3>
+                <p>
+                  {yolo.isReady 
+                    ? "이미지를 클릭하여 업로드하거나 이곳으로 드래그해주세요." 
+                    : "좌측 메뉴에서 'Load Model' 버튼을 눌러 AI 모델을 먼저 로드해주세요."}
+                </p>
               </div>
             )}
           </Dropzone>
