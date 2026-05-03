@@ -54,49 +54,51 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
             
             <div className="relative" ref={dropdownRef}>
               <button
-                className={`w-full flex items-center justify-between bg-[var(--surface-muted)] hover:bg-[var(--surface)] text-[var(--text-strong)] border border-[var(--border)] rounded-xl px-4 py-3 transition-all duration-300 shadow-sm ${isDropdownOpen ? 'border-[var(--accent)] ring-4 ring-[var(--accent-glow)]' : ''}`}
+                className={`w-full flex items-center justify-between bg-[var(--surface-muted)] hover:bg-[var(--surface)] text-[var(--text-strong)] border border-[var(--border)] rounded-2xl px-4 py-3.5 transition-all duration-300 shadow-sm ${isDropdownOpen ? 'border-[var(--accent)] ring-4 ring-[var(--accent-glow)] bg-[var(--surface)]' : ''}`}
                 onClick={() => !yolo.isBusy && setIsDropdownOpen(!isDropdownOpen)}
                 disabled={yolo.isBusy}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[var(--surface)] flex items-center justify-center text-[var(--accent)] border border-[var(--border)]">
-                    <Icon name={activeModel.icon} size={16} />
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 ${isDropdownOpen ? 'bg-[var(--accent)] text-white shadow-lg' : 'bg-[var(--surface)] text-[var(--accent)] border border-[var(--border)]'}`}>
+                    <Icon name={activeModel.icon} size={18} />
                   </div>
                   <div className="text-left">
-                    <div className="text-[13px] font-bold leading-tight">{activeModel.name}</div>
-                    <div className="text-[10px] text-[var(--text-muted)] leading-tight">{activeModel.desc}</div>
+                    <div className="text-[13px] font-bold leading-none mb-1">{activeModel.name}</div>
+                    <div className="text-[10px] text-[var(--text-muted)] font-medium leading-none">{activeModel.desc}</div>
                   </div>
                 </div>
-                <Icon name="chevron-down" size={16} className={`text-[var(--text-muted)] transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                <Icon name="chevron-down" size={18} className={`text-[var(--text-muted)] transition-transform duration-500 ${isDropdownOpen ? 'rotate-180 text-[var(--accent)]' : ''}`} />
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-xl z-50 overflow-hidden animate-slide-down backdrop-blur-xl bg-opacity-90">
-                  {MODELS.map((model) => (
-                    <button
-                      key={model.id}
-                      className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--surface-muted)] transition-colors text-left ${selectedModel === model.id ? 'bg-[var(--surface-muted)]' : ''}`}
-                      onClick={() => {
-                        setSelectedModel(model.id);
-                        setIsDropdownOpen(false);
-                      }}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${selectedModel === model.id ? 'bg-[var(--accent)] text-white border-transparent' : 'bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)]'}`}>
-                        <Icon name={model.icon} size={16} />
-                      </div>
-                      <div>
-                        <div className={`text-[13px] font-bold ${selectedModel === model.id ? 'text-[var(--accent)]' : 'text-[var(--text-strong)]'}`}>
-                          {model.name}
+                <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-2xl z-[100] overflow-hidden animate-slide-down backdrop-blur-2xl bg-opacity-95 ring-1 ring-black/5">
+                  <div className="p-1.5">
+                    {MODELS.map((model) => (
+                      <button
+                        key={model.id}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left mb-1 last:mb-0 ${selectedModel === model.id ? 'bg-[var(--accent)]/10' : 'hover:bg-[var(--surface-muted)]'}`}
+                        onClick={() => {
+                          setSelectedModel(model.id);
+                          setIsDropdownOpen(false);
+                        }}
+                      >
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${selectedModel === model.id ? 'bg-[var(--accent)] text-white' : 'bg-[var(--surface-muted)] text-[var(--text-muted)]'}`}>
+                          <Icon name={model.icon} size={16} />
                         </div>
-                        <div className="text-[10px] text-[var(--text-muted)]">{model.desc}</div>
-                      </div>
-                      {selectedModel === model.id && (
-                        <div className="ml-auto text-[var(--accent)]">
-                          <Icon name="check" size={16} />
+                        <div className="flex-1">
+                          <div className={`text-[13px] font-bold ${selectedModel === model.id ? 'text-[var(--accent)]' : 'text-[var(--text-strong)]'}`}>
+                            {model.name}
+                          </div>
+                          <div className="text-[10px] text-[var(--text-muted)] font-medium">{model.desc}</div>
                         </div>
-                      )}
-                    </button>
-                  ))}
+                        {selectedModel === model.id && (
+                          <div className="text-[var(--accent)] animate-in fade-in zoom-in duration-300">
+                            <Icon name="check" size={18} />
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
