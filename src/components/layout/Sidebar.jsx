@@ -52,23 +52,17 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
               </label>
             </div>
             
-          <div className="mb-10">
-            {/* Section Header */}
-            <div className="flex items-center gap-2 mb-4 px-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)] animate-pulse" />
-              <label className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em]">
-                Compute Engine
-              </label>
+          <div className="model-selector-group">
+            <div className="model-selector-header">
+              <div className="selector-dot" />
+              <label>Compute Engine</label>
             </div>
             
-            {/* Modern Segmented Control */}
-            <div className="relative p-1 bg-black/40 border border-white/5 rounded-2xl flex backdrop-blur-xl shadow-2xl">
-              {/* Sliding Highlight Background */}
+            <div className="model-selector-track">
               <div 
-                className="absolute inset-y-1 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] bg-gradient-to-br from-blue-600 to-blue-700 rounded-[12px] shadow-[0_8px_20px_rgba(37,99,235,0.3)] border border-white/20"
+                className="model-selector-thumb"
                 style={{ 
-                  width: 'calc(50% - 4px)', 
-                  left: selectedModel === 'yolov8-seg-half.onnx' ? '4px' : 'calc(50%)' 
+                  transform: selectedModel === 'yolov8-seg-half.onnx' ? 'translateX(0)' : 'translateX(100%)' 
                 }}
               />
               
@@ -77,14 +71,15 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
                 return (
                   <button
                     key={model.id}
-                    className={`relative flex-1 flex flex-col items-center justify-center py-4 z-10 transition-all duration-300 
-                      ${isSelected ? 'text-white scale-100' : 'text-gray-500 hover:text-gray-300 scale-95 hover:scale-100'}`}
+                    className={`model-selector-option ${isSelected ? 'active' : ''}`}
                     onClick={() => !yolo.isBusy && setSelectedModel(model.id)}
                     disabled={yolo.isBusy}
                   >
-                    <Icon name={model.icon} size={20} className={`mb-1.5 transition-transform duration-500 ${isSelected ? 'rotate-0' : '-rotate-12 opacity-50'}`} />
-                    <span className="text-[13px] font-black tracking-tight leading-none mb-1">{model.name.split(' ')[0]}</span>
-                    <span className={`text-[9px] font-bold uppercase tracking-widest opacity-60 transition-opacity ${isSelected ? 'opacity-90' : 'opacity-40'}`}>
+                    <div className="model-icon-wrap">
+                      <Icon name={model.icon} size={20} />
+                    </div>
+                    <span className="model-name">{model.name.split(' ')[0]}</span>
+                    <span className="model-desc">
                       {model.id.includes('half') ? 'Speed' : 'Precision'}
                     </span>
                   </button>
@@ -92,10 +87,9 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
               })}
             </div>
             
-            {/* Status Info Badge */}
-            <div className="mt-3 px-1 flex justify-between items-center text-[10px] font-bold text-gray-600 uppercase tracking-tight">
+            <div className="model-selector-footer">
               <span>Latency Optimized</span>
-              <span className="text-blue-500/50">v8.0.10</span>
+              <span>v8.0.10</span>
             </div>
           </div>
           </div>
