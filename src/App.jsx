@@ -302,18 +302,21 @@ export default function App() {
               <div className={`canvas-wrapper ${isComparing ? "is-comparing" : ""}`} onClick={(e) => e.stopPropagation()}>
                 <canvas 
                   ref={canvasRef} 
-                  className={`result-canvas ${isComparing ? "absolute top-0 left-0" : "relative"}`} 
+                  className="result-canvas relative" 
                 />
                 
                 {isComparing && yolo.originalBitmap && (
                   <div className="comparison-overlay z-10">
                     <canvas 
                       ref={compareCanvasRef} 
-                      className="result-canvas absolute top-0 left-0 z-20"
-                      style={{ clipPath: `inset(0 ${100 - compareRatio * 100}% 0 0)` }}
+                      className="result-canvas absolute top-0 left-0 z-10"
+                      style={{ 
+                        clipPath: `inset(0 ${100 - compareRatio * 100}% 0 0)`,
+                        pointerEvents: 'none'
+                      }}
                     />
                     <div 
-                      className="comparison-handle z-20"
+                      className="comparison-handle z-30"
                       style={{ left: `${compareRatio * 100}%` }}
                       onMouseDown={(e) => {
                         e.preventDefault();
