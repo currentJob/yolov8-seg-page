@@ -53,61 +53,52 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
             </div>
             
             <div className="relative" ref={dropdownRef}>
-              {/* Main Trigger Button */}
+              {/* Main Trigger - 시인성이 확보된 표준 색상 적용 */}
               <button
-                className={`w-full group/btn relative flex items-center justify-between p-1 rounded-2xl border-2 transition-all duration-500 overflow-hidden
-                  ${isDropdownOpen 
-                    ? 'border-[var(--accent)] shadow-[0_0_25px_rgba(var(--accent-h),var(--accent-s),60%,0.2)] bg-[var(--accent)]' 
-                    : 'border-[var(--border)] bg-[var(--border)] hover:border-[var(--accent)] hover:shadow-lg'
-                  } ${yolo.isBusy ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                className={`w-full flex items-center justify-between bg-[#1e1e2e] hover:bg-[#2a2a3c] text-white border-2 rounded-2xl px-4 py-3.5 transition-all duration-300 shadow-lg
+                  ${isDropdownOpen ? 'border-[#3b82f6] ring-4 ring-blue-500/20' : 'border-[#313144]'} 
+                  ${yolo.isBusy ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 onClick={() => !yolo.isBusy && setIsDropdownOpen(!isDropdownOpen)}
                 disabled={yolo.isBusy}
               >
-                {/* Inner Content Area */}
-                <div className="flex items-center gap-3 bg-[var(--surface)] w-full py-3 px-4 rounded-[14px] transition-colors duration-500">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 shadow-inner ${isDropdownOpen ? 'bg-[var(--accent)] text-white rotate-12 scale-110' : 'bg-[var(--surface-muted)] text-[var(--accent)]'}`}>
-                    <Icon name={activeModel.icon} size={22} className={isDropdownOpen ? 'animate-pulse' : ''} />
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-transform ${isDropdownOpen ? 'bg-[#3b82f6] text-white scale-110' : 'bg-[#2a2a3c] text-[#3b82f6]'}`}>
+                    <Icon name={activeModel.icon} size={22} />
                   </div>
-                  <div className="flex-1 text-left">
-                    <span className="block text-[15px] font-black tracking-tight leading-none mb-1">{activeModel.name}</span>
-                    <span className="block text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-[0.15em] leading-none">{activeModel.desc}</span>
-                  </div>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${isDropdownOpen ? 'bg-[var(--accent)]/10 text-[var(--accent)]' : 'bg-[var(--surface-muted)] text-[var(--text-muted)]'}`}>
-                    <Icon name="chevron-down" size={18} className={`transition-transform duration-500 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                  <div className="text-left">
+                    <div className="text-[15px] font-bold text-white leading-tight mb-0.5">{activeModel.name}</div>
+                    <div className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">{activeModel.desc}</div>
                   </div>
                 </div>
+                <Icon name="chevron-down" size={20} className={`text-gray-500 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180 text-blue-500' : ''}`} />
               </button>
 
-              {/* Premium Floating Menu */}
+              {/* Dropdown Menu - 배경과 대비되는 색상으로 재구성 */}
               {isDropdownOpen && (
-                <div className="absolute top-[calc(100%+12px)] left-0 right-0 bg-[var(--surface)] border-2 border-[var(--border)] rounded-2xl shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5)] z-[100] animate-slide-down backdrop-blur-3xl ring-1 ring-white/10 p-2">
-                  <div className="text-[10px] font-black text-[var(--text-muted)] px-3 py-2 uppercase tracking-[0.2em] opacity-40">Select Engine</div>
+                <div className="absolute top-[calc(100%+10px)] left-0 right-0 bg-[#1e1e2e] border-2 border-[#313144] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[100] p-2 animate-slide-down">
+                  <div className="text-[10px] font-bold text-gray-500 px-3 py-2 uppercase tracking-widest">Select Engine</div>
                   
                   {MODELS.map((model) => {
                     const isSelected = selectedModel === model.id;
                     return (
                       <button
                         key={model.id}
-                        className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all duration-300 mb-1 last:mb-0 group/item relative overflow-hidden
-                          ${isSelected ? 'bg-[var(--accent)] text-white shadow-lg' : 'hover:bg-[var(--surface-muted)]'}`}
+                        className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all mb-1 last:mb-0
+                          ${isSelected ? 'bg-[#3b82f6] text-white' : 'text-gray-300 hover:bg-[#2a2a3c] hover:text-white'}`}
                         onClick={() => {
                           setSelectedModel(model.id);
                           setIsDropdownOpen(false);
                         }}
                       >
-                        <div className={`w-11 h-11 rounded-lg flex items-center justify-center border-2 transition-all duration-300 flex-shrink-0
-                          ${isSelected ? 'bg-white/20 border-white/30' : 'bg-[var(--surface)] border-[var(--border)] text-[var(--accent)] group-hover/item:border-[var(--accent)] group-hover/item:scale-105'}`}>
-                          <Icon name={model.icon} size={22} />
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center border-2 transition-colors 
+                          ${isSelected ? 'bg-blue-500/30 border-white/20' : 'bg-[#2a2a3c] border-[#313144] text-blue-400'}`}>
+                          <Icon name={model.icon} size={20} />
                         </div>
                         <div className="flex-1 text-left">
-                          <div className={`text-[14px] font-black tracking-tight mb-0.5 ${isSelected ? 'text-white' : 'text-[var(--text-strong)] group-hover/item:text-[var(--accent)]'}`}>{model.name}</div>
-                          <div className={`text-[11px] font-semibold opacity-70 ${isSelected ? 'text-white' : 'text-[var(--text-muted)]'}`}>{model.desc}</div>
+                          <div className="text-[14px] font-bold tracking-tight">{model.name}</div>
+                          <div className={`text-[11px] opacity-70 ${isSelected ? 'text-white' : 'text-gray-400'}`}>{model.desc}</div>
                         </div>
-                        {isSelected && (
-                          <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center animate-in zoom-in duration-300">
-                            <Icon name="check" size={16} />
-                          </div>
-                        )}
+                        {isSelected && <Icon name="check" size={18} className="text-white" />}
                       </button>
                     );
                   })}
