@@ -49,7 +49,7 @@ export function useYoloSeg(canvasRef, settings) {
     worker.onmessage = (event) => {
       const { id, type, message, result } = event.data;
 
-      if (id !== requestIdRef.current) return;
+      if (id !== requestIdRef.current && type !== "loaded") return;
 
       if (type === "loaded") {
         setRuntime((current) => ({
@@ -140,10 +140,6 @@ export function useYoloSeg(canvasRef, settings) {
       lastFileRef.current = file;
       setDetections([]);
 
-      // 원본 비트맵 저장 (비교용)
-      const bitmap = await createImageBitmap(file);
-      setOriginalBitmap(bitmap);
-
       const needsLoad = runtime.phase === "idle" || runtime.phase === "error";
 
       setRuntime((current) => ({
@@ -155,20 +151,26 @@ export function useYoloSeg(canvasRef, settings) {
         imageSize: null,
         message: needsLoad
           ? "모델을 로드한 뒤 분석을 시작합니다. 잠시만 기다려주세요."
-          : "추론 작업을 Worker로 보냈습니다. 화면은 계속 조작할 수 있습니다.",
+          : "이미지를 분석하고 있습니다. 잠시만 기다려주세요.",
       }));
 
-      if (needsLoad) {
-        postWorkerMessage({ type: "load" });
-      }
+      // ImageBitmap 생성
+      const bitmap = await createImageBitmap(file);
+      setOriginalBitmap(bitmap);
 
       // 분석용 Worker 전송용 Bitmap (별도 생성)
       const workerBitmap = await createImageBitmap(file);
 
       const worker = workerRef.current;
       if (worker) {
+        if (needsLoad) {
+          postWorkerMessage({ type: "load" });
+        }
+
         requestIdRef.current += 1;
         const id = requestIdRef.current;
+        
+        // 모델 로딩 중일 경우 Worker 내부에서 처리되도록 넘김
         worker.postMessage({
           id,
           type: "run",
@@ -177,7 +179,7 @@ export function useYoloSeg(canvasRef, settings) {
         }, [workerBitmap]);
       }
     },
-    [postWorkerMessage, settings, runtime.phase]
+    [settings, runtime.phase]
   );
 
   const rerunLastImage = useCallback(() => {
