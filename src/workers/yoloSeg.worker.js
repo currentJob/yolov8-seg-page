@@ -249,14 +249,15 @@ async function loadModel(id) {
 
   try {
     await sessionPromise;
-  } finally {
+  } catch (err) {
     sessionPromise = null;
+    throw err;
   }
 
   if (id !== undefined) post(id, { type: "loaded" });
 }
 
-async function runImage(id, file, settings) {
+async function runImage(id, bitmap, settings) {
   if (!session) {
     if (sessionPromise) {
       await sessionPromise;
@@ -265,40 +266,44 @@ async function runImage(id, file, settings) {
     }
   }
 
-  const bitmap = await createImageBitmap(file);
-  const { tensor, letterbox } = imageToTensor(bitmap);
-  const inputName = session.inputNames[0];
-  const startedAt = performance.now();
-  const outputs = await session.run({ [inputName]: tensor });
-  const elapsed = performance.now() - startedAt;
-  const output = outputs[session.outputNames[0]];
+  try {
+    const { tensor, letterbox } = imageToTensor(bitmap);
+    const inputName = session.inputNames[0];
+    const startedAt = performance.now();
+    const outputs = await session.run({ [inputName]: tensor });
+    const elapsed = performance.now() - startedAt;
+    const output = outputs[session.outputNames[0]];
 
-  validatePrimaryOutput(output);
+    validatePrimaryOutput(output);
 
-  const proto = findProtoOutput(outputs);
-  const detections = parseDetections(output, bitmap.width, bitmap.height, letterbox, settings);
-  const resultBitmap = drawResult(bitmap, detections, proto, letterbox, settings);
+    const proto = findProtoOutput(outputs);
+    const detections = parseDetections(output, bitmap.width, bitmap.height, letterbox, settings);
+    const resultBitmap = drawResult(bitmap, detections, proto, letterbox, settings);
 
-  bitmap.close();
+    bitmap.close();
 
-  self.postMessage(
-    {
-      id,
-      type: "result",
-      result: {
-        detections,
-        elapsed,
-        bitmap: resultBitmap,
-        imageSize: `${resultBitmap.width} x ${resultBitmap.height}`,
-        protoShape: proto ? proto.dims.join(" x ") : "없음",
+    self.postMessage(
+      {
+        id,
+        type: "result",
+        result: {
+          detections,
+          elapsed,
+          bitmap: resultBitmap,
+          imageSize: `${resultBitmap.width} x ${resultBitmap.height}`,
+          protoShape: proto ? proto.dims.join(" x ") : "없음",
+        },
       },
-    },
-    [resultBitmap]
-  );
+      [resultBitmap]
+    );
+  } catch (err) {
+    if (bitmap) bitmap.close();
+    throw err;
+  }
 }
 
 self.onmessage = async (event) => {
-  const { id, type, file, settings } = event.data;
+  const { id, type, file, bitmap, settings } = event.data;
 
   try {
     if (type === "load") {
@@ -307,7 +312,10 @@ self.onmessage = async (event) => {
     }
 
     if (type === "run") {
-      await runImage(id, file, settings);
+      // bitmap이 직접 전달된 경우 사용, 아니면 file로부터 생성
+      const targetBitmap = bitmap || (file ? await createImageBitmap(file) : null);
+      if (!targetBitmap) throw new Error("분석할 이미지가 없습니다.");
+      await runImage(id, targetBitmap, settings);
     }
   } catch (error) {
     post(id, {
