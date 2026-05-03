@@ -33,7 +33,7 @@ function formatPercent(value) {
   return `${Math.round(value * 100)}%`;
 }
 
-function Dropzone({ disabled, isBusy, onFile }) {
+function Dropzone({ disabled, isBusy, onFile, children, hasImage }) {
   const [isDragging, setIsDragging] = useState(false);
   const id = useId();
 
@@ -46,7 +46,7 @@ function Dropzone({ disabled, isBusy, onFile }) {
 
   return (
     <label
-      className={`dropzone ${isDragging ? "active" : ""} ${disabled ? "disabled" : ""}`}
+      className={`dropzone ${isDragging ? "active" : ""} ${disabled ? "disabled" : ""} ${hasImage ? "dropzone-full" : ""}`}
       onDragEnter={() => setIsDragging(true)}
       onDragLeave={() => setIsDragging(false)}
       onDragOver={(event) => event.preventDefault()}
@@ -61,13 +61,17 @@ function Dropzone({ disabled, isBusy, onFile }) {
         onChange={(event) => onFile(event.target.files?.[0])}
         style={{ display: "none" }}
       />
-      <div className="dropzone-icon">
-        <Icon name="upload" />
-      </div>
-      <div className="dropzone-text">
-        <strong>{isBusy ? "Processing..." : "Upload Image"}</strong>
-        <p>Drop file or click to browse</p>
-      </div>
+      {children || (
+        <>
+          <div className="dropzone-icon">
+            <Icon name="upload" />
+          </div>
+          <div className="dropzone-text">
+            <strong>{isBusy ? "Processing..." : "Upload Image"}</strong>
+            <p>Drop file or click to browse</p>
+          </div>
+        </>
+      )}
     </label>
   );
 }
@@ -197,14 +201,6 @@ export default function App() {
             <p className="status-msg mt-3 text-xs opacity-60">{yolo.runtime.message}</p>
           </section>
 
-          <section className="panel-section stagger-2">
-            <div className="section-title">Input & Control</div>
-            <Dropzone 
-              disabled={yolo.isBusy} 
-              isBusy={yolo.isBusy} 
-              onFile={yolo.runImage} 
-            />
-          </section>
 
           <section className="panel-section stagger-3">
             <div className="section-title">
@@ -283,51 +279,58 @@ export default function App() {
         </header>
 
         <div className="canvas-container">
-          {!yolo.hasImage && (
-            <div className="empty-state">
-              <div className="empty-icon"><Icon name="zap" /></div>
-              <h3>Ready to Analyze</h3>
-              <p>Load the model and drop an image to see the AI in action.</p>
-            </div>
-          )}
-          
-          <div className={`canvas-wrapper ${isComparing ? "is-comparing" : ""}`}>
-            <canvas 
-              ref={canvasRef} 
-              className={`result-canvas ${yolo.hasImage ? "" : "hidden"} ${isComparing ? "absolute top-0 left-0" : "relative"}`} 
-            />
-            
-            {isComparing && yolo.originalBitmap && (
-              <div className="comparison-overlay z-10">
+          <Dropzone 
+            disabled={yolo.isBusy} 
+            isBusy={yolo.isBusy} 
+            onFile={yolo.runImage}
+            hasImage={yolo.hasImage}
+          >
+            {yolo.hasImage ? (
+              <div className={`canvas-wrapper ${isComparing ? "is-comparing" : ""}`} onClick={(e) => e.stopPropagation()}>
                 <canvas 
-                  ref={compareCanvasRef} 
-                  className="result-canvas absolute top-0 left-0 z-20"
-                  style={{ clipPath: `inset(0 ${100 - compareRatio * 100}% 0 0)` }}
+                  ref={canvasRef} 
+                  className={`result-canvas ${isComparing ? "absolute top-0 left-0" : "relative"}`} 
                 />
-                <div 
-                  className="comparison-handle z-20"
-                  style={{ left: `${compareRatio * 100}%` }}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    const move = (moveEvent) => {
-                      const rect = canvasRef.current.getBoundingClientRect();
-                      const x = (moveEvent.clientX - rect.left) / rect.width;
-                      setCompareRatio(Math.max(0, Math.min(1, x)));
-                    };
-                    window.addEventListener("mousemove", move);
-                    window.addEventListener("mouseup", () => window.removeEventListener("mousemove", move), { once: true });
-                  }}
-                />
+                
+                {isComparing && yolo.originalBitmap && (
+                  <div className="comparison-overlay z-10">
+                    <canvas 
+                      ref={compareCanvasRef} 
+                      className="result-canvas absolute top-0 left-0 z-20"
+                      style={{ clipPath: `inset(0 ${100 - compareRatio * 100}% 0 0)` }}
+                    />
+                    <div 
+                      className="comparison-handle z-20"
+                      style={{ left: `${compareRatio * 100}%` }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        const move = (moveEvent) => {
+                          const rect = canvasRef.current.getBoundingClientRect();
+                          const x = (moveEvent.clientX - rect.left) / rect.width;
+                          setCompareRatio(Math.max(0, Math.min(1, x)));
+                        };
+                        window.addEventListener("mousemove", move);
+                        window.addEventListener("mouseup", () => window.removeEventListener("mousemove", move), { once: true });
+                      }}
+                    />
+                  </div>
+                )}
+                
+                {yolo.isBusy && (
+                  <div className="busy-overlay">
+                    <div className="spinner" />
+                    <p>Processing...</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <div className="empty-icon"><Icon name="zap" /></div>
+                <h3>Ready to Analyze</h3>
+                <p>Click here or drop an image to see the AI in action.</p>
               </div>
             )}
-            
-            {yolo.isBusy && (
-              <div className="busy-overlay">
-                <div className="spinner" />
-                <p>Processing...</p>
-              </div>
-            )}
-          </div>
+          </Dropzone>
         </div>
 
         {history.length > 0 && (
