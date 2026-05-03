@@ -127,10 +127,7 @@ export default function App() {
       const canvas = canvasRef.current;
       if (canvas && yolo.originalBitmap) {
         try {
-          // 결과 썸네일 및 데이터
           const resultData = canvas.toDataURL("image/jpeg", 0.6);
-          
-          // 원본 이미지 데이터 추출용 임시 캔버스
           const hidden = document.createElement('canvas');
           hidden.width = yolo.originalBitmap.width;
           hidden.height = yolo.originalBitmap.height;
@@ -151,7 +148,6 @@ export default function App() {
               protoShape: yolo.runtime.protoShape,
               imageSize: yolo.runtime.imageSize
             }, ...filtered].slice(0, 8);
-            
             return next;
           });
         } catch (err) {
@@ -303,37 +299,39 @@ export default function App() {
                 <canvas 
                   ref={canvasRef} 
                   className="result-canvas relative" 
+                  style={{ zIndex: 5 }}
                 />
                 
                 {isComparing && yolo.originalBitmap && (
-                  <div className="comparison-overlay z-10">
+                  <div className="comparison-overlay" style={{ zIndex: 10 }}>
                     <canvas 
                       ref={compareCanvasRef} 
-                      className="result-canvas absolute top-0 left-0 z-10"
+                      className="result-canvas absolute top-0 left-0"
                       style={{ 
                         clipPath: `inset(0 ${100 - compareRatio * 100}% 0 0)`,
-                        pointerEvents: 'none'
+                        pointerEvents: 'none',
+                        zIndex: 11
                       }}
                     />
                     <div 
-                      className="comparison-handle z-30"
-                      style={{ left: `${compareRatio * 100}%` }}
+                      className="comparison-handle"
+                      style={{ left: `${compareRatio * 100}%`, zIndex: 15 }}
                       onMouseDown={(e) => {
                         e.preventDefault();
-                        const move = (moveEvent) => {
-                          const rect = canvasRef.current.getBoundingClientRect();
+                        const rect = canvasRef.current.getBoundingClientRect();
+                        const handleMove = (moveEvent) => {
                           const x = (moveEvent.clientX - rect.left) / rect.width;
                           setCompareRatio(Math.max(0, Math.min(1, x)));
                         };
-                        window.addEventListener("mousemove", move);
-                        window.addEventListener("mouseup", () => window.removeEventListener("mousemove", move), { once: true });
+                        window.addEventListener("mousemove", handleMove);
+                        window.addEventListener("mouseup", () => window.removeEventListener("mousemove", handleMove), { once: true });
                       }}
                     />
                   </div>
                 )}
                 
                 {yolo.isBusy && (
-                  <div className="busy-overlay">
+                  <div className="busy-overlay" style={{ zIndex: 50 }}>
                     <div className="scanning-line" />
                     <div className="busy-content">
                       <div className="spinner" />

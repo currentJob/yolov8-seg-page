@@ -249,9 +249,8 @@ async function loadModel(id) {
 
   try {
     await sessionPromise;
-  } catch (err) {
+  } finally {
     sessionPromise = null;
-    throw err;
   }
 
   if (id !== undefined) post(id, { type: "loaded" });
@@ -312,9 +311,14 @@ self.onmessage = async (event) => {
     }
 
     if (type === "run") {
-      // bitmap이 직접 전달된 경우 사용, 아니면 file로부터 생성
-      const targetBitmap = bitmap || (file ? await createImageBitmap(file) : null);
+      // bitmap이 없으면 file로부터 새로 생성 (안정성 폴백)
+      let targetBitmap = bitmap;
+      if (!targetBitmap && file) {
+        targetBitmap = await createImageBitmap(file);
+      }
+      
       if (!targetBitmap) throw new Error("분석할 이미지가 없습니다.");
+      
       await runImage(id, targetBitmap, settings);
     }
   } catch (error) {

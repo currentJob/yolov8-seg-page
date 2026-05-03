@@ -66,7 +66,6 @@ export function useYoloSeg(canvasRef, settings) {
         if (canvas) {
           canvas.width = result.bitmap.width;
           canvas.height = result.bitmap.height;
-
           const ctx = canvas.getContext("2d");
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(result.bitmap, 0, 0);
@@ -96,14 +95,6 @@ export function useYoloSeg(canvasRef, settings) {
           message: `작업 실패: ${message}`,
         }));
       }
-    };
-
-    worker.onerror = (event) => {
-      setRuntime((current) => ({
-        ...current,
-        phase: "error",
-        message: `Worker 오류: ${event.message}`,
-      }));
     };
 
     return () => {
@@ -154,32 +145,29 @@ export function useYoloSeg(canvasRef, settings) {
           : "이미지를 분석하고 있습니다. 잠시만 기다려주세요.",
       }));
 
-      // ImageBitmap 생성
+      // 원본 비트맵 저장 (메인 스레드용)
       const bitmap = await createImageBitmap(file);
       setOriginalBitmap(bitmap);
 
-      // 분석용 Worker 전송용 Bitmap (별도 생성)
-      const workerBitmap = await createImageBitmap(file);
+      if (needsLoad) {
+        postWorkerMessage({ type: "load" });
+      }
 
       const worker = workerRef.current;
       if (worker) {
-        if (needsLoad) {
-          postWorkerMessage({ type: "load" });
-        }
-
         requestIdRef.current += 1;
         const id = requestIdRef.current;
         
-        // 모델 로딩 중일 경우 Worker 내부에서 처리되도록 넘김
+        // File 객체를 직접 전송 (최초 업로드 시의 안정성 확보)
         worker.postMessage({
           id,
           type: "run",
-          bitmap: workerBitmap,
+          file,
           settings
-        }, [workerBitmap]);
+        });
       }
     },
-    [settings, runtime.phase]
+    [postWorkerMessage, settings, runtime.phase]
   );
 
   const rerunLastImage = useCallback(() => {
@@ -225,7 +213,6 @@ export function useYoloSeg(canvasRef, settings) {
     const canvas = canvasRef.current;
     if (!canvas || !item.resultData) return;
 
-    // 이미지 로드 및 캔버스 그리기
     const img = new Image();
     img.onload = () => {
       canvas.width = img.width;
@@ -235,7 +222,6 @@ export function useYoloSeg(canvasRef, settings) {
     };
     img.src = item.resultData;
 
-    // 원본 비트맵 복구
     if (item.originalData) {
       const resp = await fetch(item.originalData);
       const blob = await resp.blob();
