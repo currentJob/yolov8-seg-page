@@ -191,7 +191,7 @@ export default function App() {
               </span>
             </div>
             <button 
-              className="btn btn-primary w-full" 
+              className={`btn btn-primary w-full ${yolo.runtime.phase === "loading" ? "btn-loading" : ""}`} 
               onClick={yolo.loadModel}
               disabled={yolo.isBusy}
             >
@@ -318,8 +318,14 @@ export default function App() {
                 
                 {yolo.isBusy && (
                   <div className="busy-overlay">
-                    <div className="spinner" />
-                    <p>Processing...</p>
+                    <div className="scanning-line" />
+                    <div className="busy-content">
+                      <div className="spinner" />
+                      <p>{yolo.runtime.phase === "loading" ? "Initializing AI Model..." : "Analyzing Image..."}</p>
+                      <div className="progress-container">
+                        <div className="progress-bar" />
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
