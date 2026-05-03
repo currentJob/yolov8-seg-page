@@ -6,6 +6,7 @@ const INPUT_SIZE = 960;
 const CLASS_NAMES = ["object"];
 
 let session = null;
+let sessionPromise = null;
 
 function post(id, payload) {
   self.postMessage({ id, ...payload });
@@ -227,19 +228,41 @@ function validatePrimaryOutput(output) {
 }
 
 async function loadModel(id) {
-  ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/";
+  if (session) {
+    if (id !== undefined) post(id, { type: "loaded" });
+    return;
+  }
 
-  session = await ort.InferenceSession.create(MODEL_URL, {
-    executionProviders: ["wasm"],
-    graphOptimizationLevel: "all",
-  });
+  if (sessionPromise) {
+    await sessionPromise;
+    if (id !== undefined) post(id, { type: "loaded" });
+    return;
+  }
 
-  post(id, { type: "loaded" });
+  sessionPromise = (async () => {
+    ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/";
+    session = await ort.InferenceSession.create(MODEL_URL, {
+      executionProviders: ["wasm"],
+      graphOptimizationLevel: "all",
+    });
+  })();
+
+  try {
+    await sessionPromise;
+  } finally {
+    sessionPromise = null;
+  }
+
+  if (id !== undefined) post(id, { type: "loaded" });
 }
 
 async function runImage(id, file, settings) {
   if (!session) {
-    throw new Error("모델이 아직 로드되지 않았습니다.");
+    if (sessionPromise) {
+      await sessionPromise;
+    } else {
+      await loadModel();
+    }
   }
 
   const bitmap = await createImageBitmap(file);

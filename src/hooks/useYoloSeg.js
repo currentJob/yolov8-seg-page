@@ -138,15 +138,24 @@ export function useYoloSeg(canvasRef, settings) {
 
       lastFileRef.current = file;
       setDetections([]);
+
+      const needsLoad = runtime.phase === "idle" || runtime.phase === "error";
+
       setRuntime((current) => ({
         ...current,
-        phase: "running",
+        phase: needsLoad ? "loading" : "running",
         elapsed: null,
         protoShape: null,
         imageName: file.name,
         imageSize: null,
-        message: "추론 작업을 Worker로 보냈습니다. 화면은 계속 조작할 수 있습니다.",
+        message: needsLoad
+          ? "모델을 로드한 뒤 분석을 시작합니다. 잠시만 기다려주세요."
+          : "추론 작업을 Worker로 보냈습니다. 화면은 계속 조작할 수 있습니다.",
       }));
+
+      if (needsLoad) {
+        postWorkerMessage({ type: "load" });
+      }
 
       postWorkerMessage({
         type: "run",
@@ -154,7 +163,7 @@ export function useYoloSeg(canvasRef, settings) {
         settings,
       });
     },
-    [postWorkerMessage, settings]
+    [postWorkerMessage, settings, runtime.phase]
   );
 
   const rerunLastImage = useCallback(() => {

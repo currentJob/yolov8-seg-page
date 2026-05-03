@@ -170,7 +170,7 @@ function ControlPanel({
           <span>Input</span>
           <small>{INPUT_SIZE} x {INPUT_SIZE}</small>
         </div>
-        <Dropzone disabled={!isReady || isBusy} isBusy={isBusy} onFile={onRunImage} />
+        <Dropzone disabled={isBusy} isBusy={isBusy} onFile={onRunImage} />
       </section>
 
       <section className="panel-section">
@@ -281,9 +281,9 @@ export default function App() {
       <header className="app-header">
         <div>
           <p className="eyebrow">Browser AI vision lab</p>
-          <h1>YOLOv8-Seg Studio</h1>
+          <h1>YOLOv8-Seg</h1>
           <p className="app-header__copy">
-            React 19 기반의 가벼운 클라이언트 앱으로 ONNX 세그멘테이션 결과를 확인하고 튜닝합니다.
+            React에서 YOLOv8-seg ONNX 모델을 백엔드 없이 실행해 이미지 세그멘테이션을 수행하는 데모 페이지입니다.
           </p>
         </div>
         <div className="header-card" aria-label="현재 실행 상태">
