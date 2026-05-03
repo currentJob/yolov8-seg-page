@@ -37,12 +37,15 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
                 Fast (FP16)
               </button>
               <button
-                className={`flex-1 py-1.5 px-2 text-[11px] font-semibold rounded-md transition-all flex items-center justify-center gap-1 opacity-50 cursor-not-allowed border border-transparent text-[var(--text-muted)]`}
-                disabled
-                title="현재 안정성 점검 중입니다."
+                className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-md transition-all ${
+                  selectedModel === "yolov8-seg.onnx"
+                    ? "bg-[var(--surface)] text-[var(--accent)] shadow-sm border border-[var(--border)]"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-strong)] border border-transparent"
+                }`}
+                onClick={() => setSelectedModel("yolov8-seg.onnx")}
+                disabled={yolo.isBusy}
               >
-                <span>Accurate</span>
-                <span className="bg-orange-500/20 text-orange-400 px-1 py-0.5 rounded text-[9px] leading-none">점검중</span>
+                Accurate (FP32)
               </button>
             </div>
           </div>
