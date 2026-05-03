@@ -35,7 +35,6 @@ function formatPercent(value) {
 
 function Dropzone({ disabled, isBusy, onFile, children, hasImage }) {
   const [isDragging, setIsDragging] = useState(false);
-  const id = useId();
 
   function handleFile(file) {
     if (!file) return;
@@ -53,16 +52,15 @@ function Dropzone({ disabled, isBusy, onFile, children, hasImage }) {
   }
 
   return (
-    <label
+    <div
       className={`dropzone ${isDragging ? "active" : ""} ${disabled ? "disabled" : ""} ${hasImage ? "dropzone-full" : "dropzone-empty"}`}
       onDragEnter={() => setIsDragging(true)}
       onDragLeave={() => setIsDragging(false)}
       onDragOver={(event) => event.preventDefault()}
       onDrop={handleDrop}
-      htmlFor={id}
     >
       <input
-        id={id}
+        id="dropzone-input"
         type="file"
         accept="image/*"
         disabled={disabled}
@@ -73,18 +71,8 @@ function Dropzone({ disabled, isBusy, onFile, children, hasImage }) {
         }}
         style={{ display: "none" }}
       />
-      {children || (
-        <>
-          <div className="dropzone-icon">
-            <Icon name="upload" />
-          </div>
-          <div className="dropzone-text">
-            <strong>{isBusy ? "Processing..." : "Upload Image"}</strong>
-            <p>Drop file or click to browse</p>
-          </div>
-        </>
-      )}
-    </label>
+      {children}
+    </div>
   );
 }
 
@@ -285,13 +273,36 @@ export default function App() {
           </div>
           <div className="top-actions">
             {yolo.hasImage && (
-              <button 
-                className={`btn ${isComparing ? "btn-primary" : "btn-secondary"}`}
-                onClick={() => setIsComparing(!isComparing)}
-              >
-                <Icon name="eye" />
-                Compare
-              </button>
+              <>
+                <input
+                  id="header-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (!file.type.startsWith("image/")) {
+                        alert("이미지 파일만 업로드할 수 있습니다. (JPG, PNG 등 지원)");
+                        return;
+                      }
+                      yolo.runImage(file);
+                    }
+                    e.target.value = null;
+                  }}
+                  style={{ display: "none" }}
+                />
+                <label htmlFor="header-upload" className="btn btn-secondary cursor-pointer">
+                  <Icon name="upload" />
+                  New Image
+                </label>
+                <button 
+                  className={`btn ${isComparing ? "btn-primary" : "btn-secondary"}`}
+                  onClick={() => setIsComparing(!isComparing)}
+                >
+                  <Icon name="eye" />
+                  Compare
+                </button>
+              </>
             )}
             <button className="btn btn-secondary" onClick={toggleTheme}>
               <Icon name={theme === "light" ? "moon" : "sun"} />
@@ -356,7 +367,7 @@ export default function App() {
                 )}
               </div>
             ) : (
-              <div className="empty-state">
+              <label htmlFor="dropzone-input" className="empty-state cursor-pointer">
                 <div className="empty-icon"><Icon name="zap" /></div>
                 <h3>{yolo.isReady ? "AI 분석 준비 완료" : "모델 로드 필요"}</h3>
                 <p>
@@ -364,7 +375,7 @@ export default function App() {
                     ? "이미지를 클릭하여 업로드하거나 이곳으로 드래그해주세요." 
                     : "좌측 메뉴에서 'Load Model' 버튼을 눌러 AI 모델을 먼저 로드해주세요."}
                 </p>
-              </div>
+              </label>
             )}
           </Dropzone>
         </div>
