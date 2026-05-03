@@ -53,60 +53,64 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
             </div>
             
             <div className="relative" ref={dropdownRef}>
+              {/* Main Trigger Button */}
               <button
-                className={`w-full flex items-center justify-between transition-all duration-500 rounded-2xl px-4 py-3.5 border shadow-sm group/btn
+                className={`w-full group/btn relative flex items-center justify-between p-1 rounded-2xl border-2 transition-all duration-500 overflow-hidden
                   ${isDropdownOpen 
-                    ? 'bg-[var(--surface)] border-[var(--accent)] ring-4 ring-[var(--accent-glow)]' 
-                    : 'bg-[var(--surface-muted)] border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--surface)] hover:shadow-md'
-                  } text-[var(--text-strong)]`}
+                    ? 'border-[var(--accent)] shadow-[0_0_25px_rgba(var(--accent-h),var(--accent-s),60%,0.2)] bg-[var(--accent)]' 
+                    : 'border-[var(--border)] bg-[var(--border)] hover:border-[var(--accent)] hover:shadow-lg'
+                  } ${yolo.isBusy ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 onClick={() => !yolo.isBusy && setIsDropdownOpen(!isDropdownOpen)}
                 disabled={yolo.isBusy}
               >
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 shadow-sm ${isDropdownOpen ? 'bg-[var(--accent)] text-white rotate-6 scale-110' : 'bg-[var(--surface)] text-[var(--accent)] border border-[var(--border)] group-hover/btn:scale-105'}`}>
-                    <Icon name={activeModel.icon} size={20} />
+                {/* Inner Content Area */}
+                <div className="flex items-center gap-3 bg-[var(--surface)] w-full py-3 px-4 rounded-[14px] transition-colors duration-500">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 shadow-inner ${isDropdownOpen ? 'bg-[var(--accent)] text-white rotate-12 scale-110' : 'bg-[var(--surface-muted)] text-[var(--accent)]'}`}>
+                    <Icon name={activeModel.icon} size={22} className={isDropdownOpen ? 'animate-pulse' : ''} />
                   </div>
-                  <div className="text-left">
-                    <div className="text-[14px] font-extrabold leading-none mb-1.5">{activeModel.name}</div>
-                    <div className="text-[10px] text-[var(--text-muted)] font-semibold uppercase tracking-wider leading-none">{activeModel.desc}</div>
+                  <div className="flex-1 text-left">
+                    <span className="block text-[15px] font-black tracking-tight leading-none mb-1">{activeModel.name}</span>
+                    <span className="block text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-[0.15em] leading-none">{activeModel.desc}</span>
+                  </div>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${isDropdownOpen ? 'bg-[var(--accent)]/10 text-[var(--accent)]' : 'bg-[var(--surface-muted)] text-[var(--text-muted)]'}`}>
+                    <Icon name="chevron-down" size={18} className={`transition-transform duration-500 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </div>
-                <Icon name="chevron-down" size={18} className={`text-[var(--text-muted)] transition-transform duration-500 ${isDropdownOpen ? 'rotate-180 text-[var(--accent)]' : 'group-hover/btn:text-[var(--accent)]'}`} />
               </button>
 
+              {/* Premium Floating Menu */}
               {isDropdownOpen && (
-                <div className="absolute top-[calc(100%+10px)] left-0 right-0 bg-[var(--surface)] border-2 border-[var(--border)] rounded-2xl shadow-2xl z-[100] overflow-hidden animate-slide-down backdrop-blur-3xl bg-opacity-95 ring-1 ring-black/5">
-                  <div className="p-2">
-                    {MODELS.map((model) => (
+                <div className="absolute top-[calc(100%+12px)] left-0 right-0 bg-[var(--surface)] border-2 border-[var(--border)] rounded-2xl shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5)] z-[100] animate-slide-down backdrop-blur-3xl ring-1 ring-white/10 p-2">
+                  <div className="text-[10px] font-black text-[var(--text-muted)] px-3 py-2 uppercase tracking-[0.2em] opacity-40">Select Engine</div>
+                  
+                  {MODELS.map((model) => {
+                    const isSelected = selectedModel === model.id;
+                    return (
                       <button
                         key={model.id}
-                        className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-300 text-left mb-1 last:mb-0 group/item ${selectedModel === model.id ? 'bg-[var(--accent)] text-white shadow-lg' : 'hover:bg-[var(--surface-muted)]'}`}
+                        className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all duration-300 mb-1 last:mb-0 group/item relative overflow-hidden
+                          ${isSelected ? 'bg-[var(--accent)] text-white shadow-lg' : 'hover:bg-[var(--surface-muted)]'}`}
                         onClick={() => {
                           setSelectedModel(model.id);
                           setIsDropdownOpen(false);
                         }}
                       >
-                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-300 flex-shrink-0 ${selectedModel === model.id ? 'bg-white/20 text-white' : 'bg-[var(--surface-muted)] text-[var(--accent)] group-hover/item:scale-110'}`}>
-                          <Icon name={model.icon} size={18} />
+                        <div className={`w-11 h-11 rounded-lg flex items-center justify-center border-2 transition-all duration-300 flex-shrink-0
+                          ${isSelected ? 'bg-white/20 border-white/30' : 'bg-[var(--surface)] border-[var(--border)] text-[var(--accent)] group-hover/item:border-[var(--accent)] group-hover/item:scale-105'}`}>
+                          <Icon name={model.icon} size={22} />
                         </div>
-                        <div className="flex-1 flex items-center justify-between gap-3 overflow-hidden">
-                          <div className="flex flex-col">
-                            <span className={`text-[13px] font-bold whitespace-nowrap transition-colors ${selectedModel === model.id ? 'text-white' : 'text-[var(--text-strong)] group-hover/item:text-[var(--accent)]'}`}>
-                              {model.name}
-                            </span>
-                            <span className={`text-[10px] font-medium whitespace-nowrap transition-colors ${selectedModel === model.id ? 'text-white/70' : 'text-[var(--text-muted)]'}`}>
-                              {model.desc}
-                            </span>
-                          </div>
+                        <div className="flex-1 text-left">
+                          <div className={`text-[14px] font-black tracking-tight mb-0.5 ${isSelected ? 'text-white' : 'text-[var(--text-strong)] group-hover/item:text-[var(--accent)]'}`}>{model.name}</div>
+                          <div className={`text-[11px] font-semibold opacity-70 ${isSelected ? 'text-white' : 'text-[var(--text-muted)]'}`}>{model.desc}</div>
                         </div>
-                        {selectedModel === model.id && (
-                          <div className="text-white flex-shrink-0 animate-in zoom-in duration-300">
-                            <Icon name="check" size={20} />
+                        {isSelected && (
+                          <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center animate-in zoom-in duration-300">
+                            <Icon name="check" size={16} />
                           </div>
                         )}
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
