@@ -346,8 +346,8 @@ export default function App() {
             ) : (
               <div className="empty-state">
                 <div className="empty-icon"><Icon name="zap" /></div>
-                <h3>Ready to Analyze</h3>
-                <p>Click here or drop an image to see the AI in action.</p>
+                <h3>AI 분석 준비 완료</h3>
+                <p>이미지를 클릭하여 업로드하거나 이곳으로 드래그해주세요.</p>
               </div>
             )}
           </Dropzone>
