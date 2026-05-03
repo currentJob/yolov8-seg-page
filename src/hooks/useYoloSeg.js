@@ -200,15 +200,40 @@ export function useYoloSeg(canvasRef, settings) {
     }));
   }, [canvasRef, isReady]);
 
-  const downloadResult = useCallback(() => {
+  const restoreResult = useCallback(async (item) => {
     const canvas = canvasRef.current;
-    if (!canvas || !hasImage) return;
+    if (!canvas || !item.resultData) return;
 
-    const link = document.createElement("a");
-    link.href = canvas.toDataURL("image/png");
-    link.download = "yolo-seg-result.png";
-    link.click();
-  }, [canvasRef, hasImage]);
+    // 이미지 로드 및 캔버스 그리기
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+    };
+    img.src = item.resultData;
+
+    // 원본 비트맵 복구
+    if (item.originalData) {
+      const resp = await fetch(item.originalData);
+      const blob = await resp.blob();
+      const bitmap = await createImageBitmap(blob);
+      setOriginalBitmap(bitmap);
+    }
+
+    setHasImage(true);
+    setDetections(item.detections || []);
+    setRuntime((current) => ({
+      ...current,
+      phase: "done",
+      imageName: item.name,
+      elapsed: item.elapsed,
+      protoShape: item.protoShape,
+      imageSize: item.imageSize,
+      message: "히스토리에서 결과를 복구했습니다.",
+    }));
+  }, [canvasRef]);
 
   return {
     runtime,
@@ -224,5 +249,6 @@ export function useYoloSeg(canvasRef, settings) {
     rerunLastImage,
     clearResult,
     downloadResult,
+    restoreResult,
   };
 }

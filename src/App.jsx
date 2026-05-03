@@ -96,6 +96,7 @@ function SettingsSlider({ item, value, onChange }) {
 export default function App() {
   const canvasRef = useRef(null);
   const compareCanvasRef = useRef(null);
+  const hiddenCanvasRef = useRef(null);
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem("yolo-history") || "[]"));
@@ -109,14 +110,36 @@ export default function App() {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // Handle history updates
+  // 히스토리에 아이템 추가
   useEffect(() => {
     if (yolo.runtime.phase === "done" && yolo.hasImage) {
       const canvas = canvasRef.current;
-      if (canvas) {
-        const thumb = canvas.toDataURL("image/jpeg", 0.6);
+      if (canvas && yolo.originalBitmap) {
+        // 결과 썸네일 및 데이터
+        const resultData = canvas.toDataURL("image/jpeg", 0.7);
+        
+        // 원본 이미지 데이터 추출
+        const hidden = document.createElement('canvas');
+        hidden.width = yolo.originalBitmap.width;
+        hidden.height = yolo.originalBitmap.height;
+        const ctx = hidden.getContext('2d');
+        ctx.drawImage(yolo.originalBitmap, 0, 0);
+        const originalData = hidden.toDataURL("image/jpeg", 0.7);
+
         setHistory(prev => {
-          const next = [{ id: Date.now(), thumb, name: yolo.runtime.imageName }, ...prev].slice(0, 10);
+          // 중복 이름 제거 (선택 사항)
+          const filtered = prev.filter(item => item.name !== yolo.runtime.imageName);
+          const next = [{ 
+            id: Date.now(), 
+            thumb: resultData, 
+            resultData,
+            originalData,
+            name: yolo.runtime.imageName,
+            detections: yolo.detections,
+            elapsed: yolo.runtime.elapsed,
+            protoShape: yolo.runtime.protoShape,
+            imageSize: yolo.runtime.imageSize
+          }, ...filtered].slice(0, 8);
           localStorage.setItem("yolo-history", JSON.stringify(next));
           return next;
         });
@@ -124,7 +147,7 @@ export default function App() {
     }
   }, [yolo.runtime.phase, yolo.hasImage, yolo.runtime.imageName]);
 
-  // Drawing original for comparison
+  // 비교 모드 시 원본 그리기
   useEffect(() => {
     if (isComparing && yolo.originalBitmap && compareCanvasRef.current) {
       const canvas = compareCanvasRef.current;
@@ -133,13 +156,18 @@ export default function App() {
       const ctx = canvas.getContext("2d");
       ctx.drawImage(yolo.originalBitmap, 0, 0);
     }
-  }, [isComparing, yolo.originalBitmap]);
+  }, [isComparing, yolo.originalBitmap, compareRatio]);
 
   const updateSetting = (key, value) => {
     setSettings(curr => ({ ...curr, [key]: value }));
   };
 
   const toggleTheme = () => setTheme(t => t === "light" ? "dark" : "light");
+
+  const handleHistoryClick = (item) => {
+    yolo.restoreResult(item);
+    setIsComparing(false);
+  };
 
   return (
     <div className="app-container">
@@ -266,22 +294,24 @@ export default function App() {
           <div className={`canvas-wrapper ${isComparing ? "is-comparing" : ""}`}>
             <canvas 
               ref={canvasRef} 
-              className={`result-canvas ${yolo.hasImage ? "" : "hidden"}`} 
+              className={`result-canvas ${yolo.hasImage ? "" : "hidden"} ${isComparing ? "absolute top-0 left-0" : "relative"}`} 
             />
+            
             {isComparing && yolo.originalBitmap && (
-              <div className="comparison-overlay">
+              <div className="comparison-overlay z-10">
                 <canvas 
                   ref={compareCanvasRef} 
-                  className="result-canvas absolute top-0 left-0"
+                  className="result-canvas absolute top-0 left-0 z-20"
                   style={{ clipPath: `inset(0 ${100 - compareRatio * 100}% 0 0)` }}
                 />
                 <div 
-                  className="comparison-handle"
+                  className="comparison-handle z-20"
                   style={{ left: `${compareRatio * 100}%` }}
-                  onMouseDown={() => {
-                    const move = (e) => {
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    const move = (moveEvent) => {
                       const rect = canvasRef.current.getBoundingClientRect();
-                      const x = (e.clientX - rect.left) / rect.width;
+                      const x = (moveEvent.clientX - rect.left) / rect.width;
                       setCompareRatio(Math.max(0, Math.min(1, x)));
                     };
                     window.addEventListener("mousemove", move);
@@ -304,7 +334,11 @@ export default function App() {
           <footer className="history-tray">
             <div className="history-label">Recent</div>
             {history.map(item => (
-              <div key={item.id} className="history-item">
+              <div 
+                key={item.id} 
+                className={`history-item ${yolo.runtime.imageName === item.name ? "active" : ""}`}
+                onClick={() => handleHistoryClick(item)}
+              >
                 <img src={item.thumb} alt={item.name} title={item.name} />
               </div>
             ))}
