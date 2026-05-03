@@ -108,7 +108,8 @@ function parseDetections(output, imgW, imgH, letterbox, settings) {
       }
     }
 
-    if (bestScore < settings.confidence) continue;
+    const prob = sigmoid(bestScore);
+    if (prob < settings.confidence) continue;
 
     const x1Model = cx - width / 2;
     const y1Model = cy - height / 2;
@@ -130,7 +131,7 @@ function parseDetections(output, imgW, imgH, letterbox, settings) {
       y1,
       x2,
       y2,
-      score: bestScore,
+      score: prob,
       classId: bestClass,
       maskCoeff,
     });
