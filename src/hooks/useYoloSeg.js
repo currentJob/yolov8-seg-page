@@ -200,6 +200,16 @@ export function useYoloSeg(canvasRef, settings) {
     }));
   }, [canvasRef, isReady]);
 
+  const downloadResult = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !hasImage) return;
+
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = "yolo-seg-result.png";
+    link.click();
+  }, [canvasRef, hasImage]);
+
   const restoreResult = useCallback(async (item) => {
     const canvas = canvasRef.current;
     if (!canvas || !item.resultData) return;
