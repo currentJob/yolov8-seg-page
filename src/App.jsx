@@ -27,7 +27,7 @@ export default function App() {
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem("yoloSettings");
-      return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+      return saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS;
     } catch {
       return DEFAULT_SETTINGS;
     }

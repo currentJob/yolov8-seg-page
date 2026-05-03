@@ -5,7 +5,7 @@ export function SettingsSlider({ item, value, onChange }) {
       <div className="slider-header">
         <label>{item.label}</label>
         <span className="slider-value">
-          {item.format ? item.format(value) : value.toFixed(2)}
+          {item.format ? item.format(value) : (value ?? 0).toFixed(2)}
         </span>
       </div>
       <div className="slider-track-wrap">
