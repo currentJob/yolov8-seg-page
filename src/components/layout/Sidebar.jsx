@@ -52,59 +52,52 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
               </label>
             </div>
             
-            <div className="relative" ref={dropdownRef}>
-              {/* Main Trigger - 시인성이 확보된 표준 색상 적용 */}
-              <button
-                className={`w-full flex items-center justify-between bg-[#1e1e2e] hover:bg-[#2a2a3c] text-white border-2 rounded-2xl px-4 py-3.5 transition-all duration-300 shadow-lg
-                  ${isDropdownOpen ? 'border-[#3b82f6] ring-4 ring-blue-500/20' : 'border-[#313144]'} 
-                  ${yolo.isBusy ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                onClick={() => !yolo.isBusy && setIsDropdownOpen(!isDropdownOpen)}
-                disabled={yolo.isBusy}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-transform ${isDropdownOpen ? 'bg-[#3b82f6] text-white scale-110' : 'bg-[#2a2a3c] text-[#3b82f6]'}`}>
-                    <Icon name={activeModel.icon} size={22} />
-                  </div>
-                  <div className="text-left">
-                    <div className="text-[15px] font-bold text-white leading-tight mb-0.5">{activeModel.name}</div>
-                    <div className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">{activeModel.desc}</div>
-                  </div>
-                </div>
-                <Icon name="chevron-down" size={20} className={`text-gray-500 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180 text-blue-500' : ''}`} />
-              </button>
-
-              {/* Dropdown Menu - 배경과 대비되는 색상으로 재구성 */}
-              {isDropdownOpen && (
-                <div className="absolute top-[calc(100%+10px)] left-0 right-0 bg-[#1e1e2e] border-2 border-[#313144] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[100] p-2 animate-slide-down">
-                  <div className="text-[10px] font-bold text-gray-500 px-3 py-2 uppercase tracking-widest">Select Engine</div>
-                  
-                  {MODELS.map((model) => {
-                    const isSelected = selectedModel === model.id;
-                    return (
-                      <button
-                        key={model.id}
-                        className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all mb-1 last:mb-0
-                          ${isSelected ? 'bg-[#3b82f6] text-white' : 'text-gray-300 hover:bg-[#2a2a3c] hover:text-white'}`}
-                        onClick={() => {
-                          setSelectedModel(model.id);
-                          setIsDropdownOpen(false);
-                        }}
-                      >
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center border-2 transition-colors 
-                          ${isSelected ? 'bg-blue-500/30 border-white/20' : 'bg-[#2a2a3c] border-[#313144] text-blue-400'}`}>
-                          <Icon name={model.icon} size={20} />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <div className="text-[14px] font-bold tracking-tight">{model.name}</div>
-                          <div className={`text-[11px] opacity-70 ${isSelected ? 'text-white' : 'text-gray-400'}`}>{model.desc}</div>
-                        </div>
-                        {isSelected && <Icon name="check" size={18} className="text-white" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+          <div className="mb-10">
+            {/* Section Header */}
+            <div className="flex items-center gap-2 mb-4 px-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)] animate-pulse" />
+              <label className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em]">
+                Compute Engine
+              </label>
             </div>
+            
+            {/* Modern Segmented Control */}
+            <div className="relative p-1 bg-black/40 border border-white/5 rounded-2xl flex backdrop-blur-xl shadow-2xl">
+              {/* Sliding Highlight Background */}
+              <div 
+                className="absolute inset-y-1 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] bg-gradient-to-br from-blue-600 to-blue-700 rounded-[12px] shadow-[0_8px_20px_rgba(37,99,235,0.3)] border border-white/20"
+                style={{ 
+                  width: 'calc(50% - 4px)', 
+                  left: selectedModel === 'yolov8-seg-half.onnx' ? '4px' : 'calc(50%)' 
+                }}
+              />
+              
+              {MODELS.map((model) => {
+                const isSelected = selectedModel === model.id;
+                return (
+                  <button
+                    key={model.id}
+                    className={`relative flex-1 flex flex-col items-center justify-center py-4 z-10 transition-all duration-300 
+                      ${isSelected ? 'text-white scale-100' : 'text-gray-500 hover:text-gray-300 scale-95 hover:scale-100'}`}
+                    onClick={() => !yolo.isBusy && setSelectedModel(model.id)}
+                    disabled={yolo.isBusy}
+                  >
+                    <Icon name={model.icon} size={20} className={`mb-1.5 transition-transform duration-500 ${isSelected ? 'rotate-0' : '-rotate-12 opacity-50'}`} />
+                    <span className="text-[13px] font-black tracking-tight leading-none mb-1">{model.name.split(' ')[0]}</span>
+                    <span className={`text-[9px] font-bold uppercase tracking-widest opacity-60 transition-opacity ${isSelected ? 'opacity-90' : 'opacity-40'}`}>
+                      {model.id.includes('half') ? 'Speed' : 'Precision'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            
+            {/* Status Info Badge */}
+            <div className="mt-3 px-1 flex justify-between items-center text-[10px] font-bold text-gray-600 uppercase tracking-tight">
+              <span>Latency Optimized</span>
+              <span className="text-blue-500/50">v8.0.10</span>
+            </div>
+          </div>
           </div>
           <button 
             className={`btn btn-primary w-full ${yolo.runtime.phase === "loading" ? "btn-loading" : ""}`} 
