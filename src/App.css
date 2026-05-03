@@ -115,6 +115,7 @@
   border-radius: calc(var(--radius) * 2);
   background: var(--surface);
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .dropzone-full.active {
