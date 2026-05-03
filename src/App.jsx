@@ -100,10 +100,23 @@ function SettingsSlider({ item, value, onChange }) {
 export default function App() {
   const canvasRef = useRef(null);
   const compareCanvasRef = useRef(null);
-  const hiddenCanvasRef = useRef(null);
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem("theme") || "dark";
+    } catch {
+      return "dark";
+    }
+  });
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-  const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem("yolo-history") || "[]"));
+  const [history, setHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem("yolo-history");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("Failed to load history", e);
+      return [];
+    }
+  });
   const [isComparing, setIsComparing] = useState(false);
   const [compareRatio, setCompareRatio] = useState(0.5);
   
@@ -111,7 +124,9 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
+    try {
+      localStorage.setItem("theme", theme);
+    } catch {}
   }, [theme]);
 
   // 히스토리에 아이템 추가
@@ -119,34 +134,45 @@ export default function App() {
     if (yolo.runtime.phase === "done" && yolo.hasImage) {
       const canvas = canvasRef.current;
       if (canvas && yolo.originalBitmap) {
-        // 결과 썸네일 및 데이터
-        const resultData = canvas.toDataURL("image/jpeg", 0.7);
-        
-        // 원본 이미지 데이터 추출
-        const hidden = document.createElement('canvas');
-        hidden.width = yolo.originalBitmap.width;
-        hidden.height = yolo.originalBitmap.height;
-        const ctx = hidden.getContext('2d');
-        ctx.drawImage(yolo.originalBitmap, 0, 0);
-        const originalData = hidden.toDataURL("image/jpeg", 0.7);
+        try {
+          // 결과 썸네일 및 데이터
+          const resultData = canvas.toDataURL("image/jpeg", 0.6);
+          
+          // 원본 이미지 데이터 추출용 임시 캔버스
+          const hidden = document.createElement('canvas');
+          hidden.width = yolo.originalBitmap.width;
+          hidden.height = yolo.originalBitmap.height;
+          const ctx = hidden.getContext('2d');
+          ctx.drawImage(yolo.originalBitmap, 0, 0);
+          const originalData = hidden.toDataURL("image/jpeg", 0.6);
 
-        setHistory(prev => {
-          // 중복 이름 제거 (선택 사항)
-          const filtered = prev.filter(item => item.name !== yolo.runtime.imageName);
-          const next = [{ 
-            id: Date.now(), 
-            thumb: resultData, 
-            resultData,
-            originalData,
-            name: yolo.runtime.imageName,
-            detections: yolo.detections,
-            elapsed: yolo.runtime.elapsed,
-            protoShape: yolo.runtime.protoShape,
-            imageSize: yolo.runtime.imageSize
-          }, ...filtered].slice(0, 8);
-          localStorage.setItem("yolo-history", JSON.stringify(next));
-          return next;
-        });
+          setHistory(prev => {
+            const filtered = prev.filter(item => item.name !== yolo.runtime.imageName);
+            const next = [{ 
+              id: Date.now(), 
+              thumb: resultData, 
+              resultData,
+              originalData,
+              name: yolo.runtime.imageName,
+              detections: yolo.detections,
+              elapsed: yolo.runtime.elapsed,
+              protoShape: yolo.runtime.protoShape,
+              imageSize: yolo.runtime.imageSize
+            }, ...filtered].slice(0, 8);
+            
+            try {
+              localStorage.setItem("yolo-history", JSON.stringify(next));
+            } catch (e) {
+              console.warn("Storage full, clearing oldest history", e);
+              // 용량 초과 시 히스토리 개수 줄여서 재시도
+              const reduced = next.slice(0, 3);
+              localStorage.setItem("yolo-history", JSON.stringify(reduced));
+            }
+            return next;
+          });
+        } catch (err) {
+          console.error("Failed to save history item", err);
+        }
       }
     }
   }, [yolo.runtime.phase, yolo.hasImage, yolo.runtime.imageName]);
@@ -169,8 +195,12 @@ export default function App() {
   const toggleTheme = () => setTheme(t => t === "light" ? "dark" : "light");
 
   const handleHistoryClick = (item) => {
-    yolo.restoreResult(item);
-    setIsComparing(false);
+    try {
+      yolo.restoreResult(item);
+      setIsComparing(false);
+    } catch (err) {
+      console.error("Failed to restore history", err);
+    }
   };
 
   return (
@@ -200,7 +230,6 @@ export default function App() {
             </button>
             <p className="status-msg mt-3 text-xs opacity-60">{yolo.runtime.message}</p>
           </section>
-
 
           <section className="panel-section stagger-3">
             <div className="section-title">
