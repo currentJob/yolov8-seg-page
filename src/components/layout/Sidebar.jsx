@@ -22,24 +22,29 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
               {yolo.runtime.phase}
             </span>
           </div>
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Model Selection
-            </label>
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-2 px-1">
+              <Icon name="layers" size={14} className="text-[var(--accent)]" />
+              <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                Model Engine
+              </label>
+            </div>
             <div className="relative group">
               <select
-                className="w-full appearance-none bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--text-strong)] border border-[var(--border)] rounded-lg pl-3 pr-10 py-2.5 text-[13px] outline-none cursor-pointer focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all shadow-sm"
+                className="w-full appearance-none bg-[var(--surface-muted)] hover:bg-[var(--surface)] text-[var(--text-strong)] border border-[var(--border)] rounded-xl pl-4 pr-10 py-3 text-[13px] font-medium outline-none cursor-pointer focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-glow)] transition-all duration-300 shadow-sm group-hover:shadow-md"
                 value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value)}
                 disabled={yolo.isBusy}
               >
-                <option value="yolov8-seg-half.onnx">YOLOv8-Seg Half (Fast / FP16)</option>
-                <option value="yolov8-seg.onnx">YOLOv8-Seg (Accurate / FP32)</option>
+                <option value="yolov8-seg-half.onnx">YOLOv8-Seg (Speed Optimized)</option>
+                <option value="yolov8-seg.onnx">YOLOv8-Seg (Precision Focused)</option>
               </select>
-              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-[var(--text-muted)] group-hover:text-[var(--text-strong)] transition-colors">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                <div className="bg-[var(--surface)] p-1 rounded-md border border-[var(--border)] group-hover:border-[var(--accent)] transition-colors shadow-sm">
+                  <svg className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
               </div>
             </div>
           </div>
