@@ -1,8 +1,11 @@
 import * as ort from "onnxruntime-web";
 import { normalizedByteToFloat16, tensorDataToFloat32 } from "../lib/float16.js";
 
-const INPUT_SIZE = 960;
 const CLASS_NAMES = ["object"];
+
+function getInputSize(modelName) {
+  return modelName === "yolov8m-seg-half.onnx" ? 640 : 960;
+}
 
 let session = null;
 let sessionPromise = null;
@@ -60,18 +63,18 @@ function getLetterbox(srcW, srcH, size) {
   return { scale, newW, newH, padX, padY };
 }
 
-function imageToTensor(bitmap) {
-  const letterbox = getLetterbox(bitmap.width, bitmap.height, INPUT_SIZE);
-  const canvas = new OffscreenCanvas(INPUT_SIZE, INPUT_SIZE);
+function imageToTensor(bitmap, inputSize) {
+  const letterbox = getLetterbox(bitmap.width, bitmap.height, inputSize);
+  const canvas = new OffscreenCanvas(inputSize, inputSize);
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
   ctx.fillStyle = "rgb(114, 114, 114)";
-  ctx.fillRect(0, 0, INPUT_SIZE, INPUT_SIZE);
+  ctx.fillRect(0, 0, inputSize, inputSize);
   ctx.drawImage(bitmap, letterbox.padX, letterbox.padY, letterbox.newW, letterbox.newH);
 
-  const imageData = ctx.getImageData(0, 0, INPUT_SIZE, INPUT_SIZE).data;
-  const tensorData = new Uint16Array(1 * 3 * INPUT_SIZE * INPUT_SIZE);
-  const area = INPUT_SIZE * INPUT_SIZE;
+  const imageData = ctx.getImageData(0, 0, inputSize, inputSize).data;
+  const tensorData = new Uint16Array(1 * 3 * inputSize * inputSize);
+  const area = inputSize * inputSize;
 
   for (let index = 0; index < area; index += 1) {
     tensorData[index] = normalizedByteToFloat16(imageData[index * 4]);
@@ -80,7 +83,7 @@ function imageToTensor(bitmap) {
   }
 
   return {
-    tensor: new ort.Tensor("float16", tensorData, [1, 3, INPUT_SIZE, INPUT_SIZE]),
+    tensor: new ort.Tensor("float16", tensorData, [1, 3, inputSize, inputSize]),
     letterbox,
   };
 }
@@ -144,7 +147,7 @@ function findProtoOutput(outputs) {
   return Object.values(outputs).find((tensor) => tensor.dims.length === 4 && tensor.dims[1] === 32);
 }
 
-function drawMask(ctx, detection, protoData, protoDims, imgW, imgH, letterbox, maskThreshold) {
+function drawMask(ctx, detection, protoData, protoDims, imgW, imgH, letterbox, maskThreshold, inputSize) {
   if (!protoData || !protoDims) return;
 
   const [, maskDim, protoH, protoW] = protoDims;
@@ -160,8 +163,8 @@ function drawMask(ctx, detection, protoData, protoDims, imgW, imgH, letterbox, m
     for (let x = x1; x < x2; x += 1) {
       const modelX = x * letterbox.scale + letterbox.padX;
       const modelY = y * letterbox.scale + letterbox.padY;
-      const px = clamp(Math.floor((modelX / INPUT_SIZE) * protoW), 0, protoW - 1);
-      const py = clamp(Math.floor((modelY / INPUT_SIZE) * protoH), 0, protoH - 1);
+      const px = clamp(Math.floor((modelX / inputSize) * protoW), 0, protoW - 1);
+      const py = clamp(Math.floor((modelY / inputSize) * protoH), 0, protoH - 1);
       let value = 0;
       const base = py * protoW + px;
 
@@ -183,7 +186,7 @@ function drawMask(ctx, detection, protoData, protoDims, imgW, imgH, letterbox, m
   ctx.drawImage(maskCanvas, 0, 0);
 }
 
-function drawResult(bitmap, detections, proto, letterbox, settings) {
+function drawResult(bitmap, detections, proto, letterbox, settings, inputSize) {
   const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
   const ctx = canvas.getContext("2d");
   const protoData = proto ? tensorDataToFloat32(proto) : null;
@@ -192,7 +195,7 @@ function drawResult(bitmap, detections, proto, letterbox, settings) {
   ctx.drawImage(bitmap, 0, 0);
 
   for (const detection of detections) {
-    drawMask(ctx, detection, protoData, protoDims, bitmap.width, bitmap.height, letterbox, settings.maskThreshold || 0.5);
+    drawMask(ctx, detection, protoData, protoDims, bitmap.width, bitmap.height, letterbox, settings.maskThreshold || 0.5, inputSize);
   }
 
   for (const detection of detections) {
@@ -280,8 +283,10 @@ async function runImage(id, bitmap, settings, modelName = "yolov8-seg-half.onnx"
     }
   }
 
+  const inputSize = getInputSize(modelName);
+
   try {
-    const { tensor, letterbox } = imageToTensor(bitmap);
+    const { tensor, letterbox } = imageToTensor(bitmap, inputSize);
     const inputName = session.inputNames[0];
     const startedAt = performance.now();
     const outputs = await session.run({ [inputName]: tensor });
@@ -292,7 +297,7 @@ async function runImage(id, bitmap, settings, modelName = "yolov8-seg-half.onnx"
 
     const proto = findProtoOutput(outputs);
     const detections = parseDetections(output, bitmap.width, bitmap.height, letterbox, settings);
-    const resultBitmap = drawResult(bitmap, detections, proto, letterbox, settings);
+    const resultBitmap = drawResult(bitmap, detections, proto, letterbox, settings, inputSize);
 
     bitmap.close();
 
