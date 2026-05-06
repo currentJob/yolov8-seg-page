@@ -7,15 +7,13 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-
 # Large model files
 dist
 dist-ssr
 *.local
 
 # Editor directories and files
-.vscode/*
+.vscode
 !.vscode/extensions.json
 .idea
 .DS_Store
@@ -24,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+node_modules
+.claude

@@ -147,20 +147,40 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
 
         <section className="panel-section stagger-4">
           <div className="section-title">Metrics</div>
-          <div className="metric-grid-compact grid grid-cols-3 gap-2">
+          <div className="metric-grid-compact grid grid-cols-2 gap-2">
             <div className="metric-box">
               <small>Objects</small>
               <strong>{yolo.stats.count}</strong>
             </div>
             <div className="metric-box">
-              <small>Conf.</small>
+              <small>Best Conf.</small>
               <strong>{formatPercent(yolo.stats.bestScore)}</strong>
             </div>
-            <div className="metric-box">
-              <small>Time</small>
-              <strong>{formatMs(yolo.runtime.elapsed)}</strong>
-            </div>
           </div>
+          {yolo.runtime.timings ? (
+            <div className="timing-breakdown">
+              <div className="timing-row">
+                <span>Preprocess</span>
+                <span>{formatMs(yolo.runtime.timings.preprocess)}</span>
+              </div>
+              <div className="timing-row timing-inference">
+                <span>Inference</span>
+                <span>{formatMs(yolo.runtime.timings.inference)}</span>
+              </div>
+              <div className="timing-row">
+                <span>Postprocess</span>
+                <span>{formatMs(yolo.runtime.timings.postprocess)}</span>
+              </div>
+              <div className="timing-row timing-total">
+                <span>Total</span>
+                <span>{formatMs(yolo.runtime.timings.total)}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="timing-breakdown timing-empty">
+              <span>추론 후 구간별 시간이 표시됩니다</span>
+            </div>
+          )}
           <div className="flex gap-2 mt-4">
             <button
               className="btn btn-secondary flex-1"

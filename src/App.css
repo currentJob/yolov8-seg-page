@@ -296,6 +296,60 @@
   color: rgba(148, 163, 184, 0.7);
 }
 
+/* Timing Breakdown */
+.timing-breakdown {
+  margin-top: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.timing-empty {
+  padding: 10px 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.timing-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 12px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.timing-row:last-child {
+  border-bottom: none;
+}
+
+.timing-row span:last-child {
+  font-family: var(--display);
+  font-weight: 700;
+  color: var(--text-strong);
+  font-size: 13px;
+}
+
+.timing-inference {
+  background: hsla(var(--accent-h), var(--accent-s), 50%, 0.06);
+}
+
+.timing-inference span:first-child {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.timing-total {
+  background: var(--surface-muted);
+}
+
+.timing-total span {
+  font-weight: 700 !important;
+  color: var(--text-strong) !important;
+}
+
 /* Sidebar Upload Button */
 .sidebar-upload-btn {
   display: flex;
