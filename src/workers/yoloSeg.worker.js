@@ -288,6 +288,7 @@ async function loadModel(id, modelName = "yolov8-seg-half.onnx") {
 
   sessionPromise = (async () => {
     ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/";
+    ort.env.logLevel = "error"; // warning 레벨 ORT 로그 억제 (shape ops CPU 배정 등 정상 동작)
 
     // 1순위: WebGPU
     if (self.navigator?.gpu) {

@@ -1,6 +1,7 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
 export function useZoomPan() {
+  const containerRef = useRef(null);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const isDraggingRef = useRef(false);
@@ -11,9 +12,18 @@ export function useZoomPan() {
     setScale((prevScale) => {
       const zoomFactor = 0.1;
       const newScale = e.deltaY < 0 ? prevScale + zoomFactor : prevScale - zoomFactor;
-      return Math.min(Math.max(1, newScale), 5); // limit zoom between 1x and 5x
+      return Math.min(Math.max(1, newScale), 5);
     });
   }, []);
+
+  // React의 onWheel은 passive로 등록되어 preventDefault()가 무시됨
+  // → 직접 { passive: false }로 등록해야 스크롤을 막을 수 있음
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [handleWheel]);
 
   const handleMouseDown = useCallback((e) => {
     if (e.button !== 0) return; // Only left click
@@ -44,9 +54,9 @@ export function useZoomPan() {
   }, []);
 
   return {
+    containerRef,
     scale,
     position,
-    handleWheel,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
