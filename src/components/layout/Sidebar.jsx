@@ -37,12 +37,12 @@ const EP_OPTIONS = [
   { value: "cpu",  label: "CPU",   title: "WASM CPU 강제 사용 (FP32, 정밀도 최우선)" },
 ];
 
-export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedModel, setSelectedModel, preferredEp, setPreferredEp, onUpload }) {
+export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedModel, setSelectedModel, preferredEp, setPreferredEp, onUpload, mobileHidden }) {
   const modelIndex = MODELS.findIndex(m => m.id === selectedModel);
   const activeIndex = modelIndex < 0 ? 0 : modelIndex;
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${mobileHidden ? " mobile-hidden" : ""}`}>
       <header className="sidebar-header">
         <p className="eyebrow">Vision AI Lab</p>
         <h1>YOLOv8-Seg</h1>
