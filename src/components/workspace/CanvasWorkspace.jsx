@@ -10,23 +10,23 @@ export function CanvasWorkspace({
   compareRatio, 
   setCompareRatio 
 }) {
-  const { 
-    scale, 
-    transformStyle, 
-    handleWheel, 
-    handleMouseDown, 
-    handleMouseMove, 
-    handleMouseUp, 
-    resetZoomPan 
+  const {
+    containerRef,
+    scale,
+    transformStyle,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    resetZoomPan
   } = useZoomPan();
 
   return (
     <div className="canvas-container relative overflow-hidden flex-1 flex items-center justify-center p-10">
       {yolo.hasImage ? (
-        <div 
-          className={`canvas-wrapper ${isComparing ? "is-comparing" : ""}`} 
+        <div
+          ref={containerRef}
+          className={`canvas-wrapper ${isComparing ? "is-comparing" : ""}`}
           onClick={(e) => e.stopPropagation()}
-          onWheel={handleWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
