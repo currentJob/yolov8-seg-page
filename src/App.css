@@ -147,7 +147,7 @@
 
 /* Model Selector Segmented Control */
 .model-selector-group {
-  margin-bottom: 40px;
+  margin-bottom: 16px;
 }
 
 .model-selector-header {
@@ -195,10 +195,10 @@
   position: absolute;
   top: 4px;
   bottom: 4px;
-  width: calc(50% - 4px);
+  width: calc(33.333% - 2.667px);
   background: linear-gradient(135deg, #3b82f6, #2563eb);
   border-radius: 12px;
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: left 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
   box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.2);
   z-index: 1;
@@ -621,25 +621,33 @@ input[type="range"]::-webkit-scrollbar-thumb {
 /* Additional UI Elements */
 .metric-box {
   background: var(--surface);
-  padding: 12px;
+  padding: 10px 8px;
   border-radius: 8px;
   border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .metric-box small {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .metric-box strong {
-  font-size: 20px;
+  font-size: 17px;
   color: var(--text-strong);
   font-family: var(--display);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @keyframes slide-down {
@@ -792,6 +800,10 @@ input[type="range"]::-webkit-scrollbar-thumb {
 
 .grid-cols-2 {
   grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-cols-3 {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .gap-2 {
