@@ -1,4 +1,3 @@
-import { useState, useRef, useEffect } from "react";
 import { Icon } from "../ui/Icon";
 import { SettingsSlider } from "../ui/SettingsSlider";
 import { Dropzone } from "../workspace/Dropzone";
@@ -7,96 +6,79 @@ function formatPercent(value) {
   return `${Math.round(value * 100)}%`;
 }
 
+function formatMs(ms) {
+  if (ms == null) return "—";
+  return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms)}ms`;
+}
+
 const MODELS = [
-  { id: "yolov8-seg-half.onnx", name: "Fast Engine", desc: "FP16 / Speed Optimized", icon: "zap" },
-  { id: "yolov8m-seg.onnx", name: "Fast Engine", desc: "FP16 / Speed Optimized", icon: "target" },
-  { id: "yolov8-seg.onnx", name: "Accurate Engine", desc: "FP32 / Precision Focused", icon: "target" }
+  { id: "yolov8-seg-half.onnx",   name: "Nano",   tag: "n · FP16", desc: "Speed",    icon: "zap"    },
+  { id: "yolov8m-seg-half.onnx",  name: "Medium", tag: "m · FP16", desc: "Balanced", icon: "tool"   },
+  { id: "yolov8-seg.onnx",        name: "Nano",   tag: "n · FP32", desc: "Precise",  icon: "target" },
 ];
 
+const THUMB_LEFTS = ["4px", "calc(33.333% + 1.333px)", "calc(66.667% - 1.333px)"];
+
 export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedModel, setSelectedModel, onUpload }) {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  const activeModel = MODELS.find(m => m.id === selectedModel) || MODELS[0];
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const modelIndex = MODELS.findIndex(m => m.id === selectedModel);
+  const activeIndex = modelIndex < 0 ? 0 : modelIndex;
 
   return (
     <aside className="sidebar">
       <header className="sidebar-header">
         <p className="eyebrow">Vision AI Lab</p>
         <h1>YOLOv8-Seg</h1>
-        <p>Real-time segmentation on edge</p>
+        <p>Real-time instance segmentation</p>
       </header>
 
       <div className="sidebar-content">
         <section className="panel-section stagger-1">
           <div className="section-title">
-            <span>Runtime Status</span>
+            <span>Model Engine</span>
             <span className={`status-pill ${yolo.runtime.phase}`}>
               {yolo.runtime.phase}
             </span>
           </div>
-          
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-2 px-1">
-              <Icon name="layers" size={14} className="text-[var(--accent)]" />
-              <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                Model Engine
-              </label>
-            </div>
-            
+
           <div className="model-selector-group">
             <div className="model-selector-header">
               <div className="selector-dot" />
               <label>Compute Engine</label>
             </div>
-            
+
             <div className="model-selector-track">
-              <div 
+              <div
                 className="model-selector-thumb"
-                style={{ 
-                  transform: selectedModel === 'yolov8-seg-half.onnx' ? 'translateX(0)' : 'translateX(100%)' 
-                }}
+                style={{ left: THUMB_LEFTS[activeIndex] }}
               />
-              
-              {MODELS.map((model) => {
-                const isSelected = selectedModel === model.id;
+              {MODELS.map((model, i) => {
+                const isSelected = i === activeIndex;
                 return (
                   <button
                     key={model.id}
-                    className={`model-selector-option ${isSelected ? 'active' : ''}`}
+                    className={`model-selector-option ${isSelected ? "active" : ""}`}
                     onClick={() => !yolo.isBusy && setSelectedModel(model.id)}
                     disabled={yolo.isBusy}
+                    title={`${model.name} (${model.tag})`}
                   >
                     <div className="model-icon-wrap">
-                      <Icon name={model.icon} size={20} />
+                      <Icon name={model.icon} size={18} />
                     </div>
-                    <span className="model-name">{model.name.split(' ')[0]}</span>
-                    <span className="model-desc">
-                      {model.id.includes('half') ? 'Speed' : 'Precision'}
-                    </span>
+                    <span className="model-name">{model.name}</span>
+                    <span className="model-desc">{model.desc}</span>
                   </button>
                 );
               })}
             </div>
-            
+
             <div className="model-selector-footer">
-              <span>Latency Optimized</span>
-              <span>v8.0.10</span>
+              <span>{MODELS[activeIndex].tag}</span>
+              <span>YOLOv8</span>
             </div>
           </div>
-          </div>
-          <button 
-            className={`btn btn-primary w-full ${yolo.runtime.phase === "loading" ? "btn-loading" : ""}`} 
+
+          <button
+            className={`btn btn-primary w-full ${yolo.runtime.phase === "loading" ? "btn-loading" : ""}`}
             onClick={yolo.loadModel}
             disabled={yolo.isBusy}
           >
@@ -109,9 +91,7 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
         <section className="panel-section stagger-2 upload-section">
           <div className="section-title">
             <span>Image Upload</span>
-            {yolo.hasImage && (
-              <span className="status-pill done">Loaded</span>
-            )}
+            {yolo.hasImage && <span className="status-pill done">Loaded</span>}
           </div>
           <Dropzone disabled={yolo.isBusy} isBusy={yolo.isBusy} onFile={onUpload} hasImage={yolo.hasImage} inputId="sidebar-upload-input">
             <label
@@ -150,14 +130,18 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
 
         <section className="panel-section stagger-4">
           <div className="section-title">Metrics</div>
-          <div className="metric-grid-compact grid grid-cols-2 gap-3">
+          <div className="metric-grid-compact grid grid-cols-3 gap-2">
             <div className="metric-box">
               <small>Objects</small>
               <strong>{yolo.stats.count}</strong>
             </div>
             <div className="metric-box">
-              <small>Confidence</small>
+              <small>Conf.</small>
               <strong>{formatPercent(yolo.stats.bestScore)}</strong>
+            </div>
+            <div className="metric-box">
+              <small>Time</small>
+              <strong>{formatMs(yolo.runtime.elapsed)}</strong>
             </div>
           </div>
           <div className="flex gap-2 mt-4">
