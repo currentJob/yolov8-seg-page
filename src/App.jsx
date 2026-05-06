@@ -79,13 +79,14 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <Sidebar 
+      <Sidebar
         yolo={yolo}
         settings={settings}
         updateSetting={updateSetting}
         sliderMeta={sliderMeta}
         selectedModel={selectedModel}
         setSelectedModel={setSelectedModel}
+        onUpload={yolo.runImage}
       />
 
       <main className="main-content">

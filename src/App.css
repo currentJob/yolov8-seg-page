@@ -267,6 +267,47 @@
   letter-spacing: 0.05em;
 }
 
+/* Sidebar Upload Button */
+.sidebar-upload-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 20px 16px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sidebar-upload-btn:hover:not(.disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: hsla(var(--accent-h), var(--accent-s), 50%, 0.06);
+}
+
+.sidebar-upload-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sidebar-upload-hint {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.6;
+}
+
+.upload-section .dropzone {
+  border: none;
+  padding: 0;
+  background: transparent;
+}
+
 /* Original panel section style preserved below */
 .panel-section {
   background: var(--surface-muted);

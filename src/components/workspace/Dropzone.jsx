@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export function Dropzone({ disabled, isBusy, onFile, children, hasImage }) {
+export function Dropzone({ disabled, isBusy, onFile, children, hasImage, inputId = "dropzone-input" }) {
   const [isDragging, setIsDragging] = useState(false);
 
   function handleFile(file) {
@@ -27,7 +27,7 @@ export function Dropzone({ disabled, isBusy, onFile, children, hasImage }) {
       onDrop={handleDrop}
     >
       <input
-        id="dropzone-input"
+        id={inputId}
         type="file"
         accept="image/*"
         disabled={disabled}

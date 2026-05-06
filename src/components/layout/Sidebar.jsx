@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Icon } from "../ui/Icon";
 import { SettingsSlider } from "../ui/SettingsSlider";
+import { Dropzone } from "../workspace/Dropzone";
 
 function formatPercent(value) {
   return `${Math.round(value * 100)}%`;
@@ -11,7 +12,7 @@ const MODELS = [
   { id: "yolov8-seg.onnx", name: "Accurate Engine", desc: "FP32 / Precision Focused", icon: "target" }
 ];
 
-export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedModel, setSelectedModel }) {
+export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedModel, setSelectedModel, onUpload }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -102,6 +103,25 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
             {yolo.isReady ? "Reload Model" : "Load Model"}
           </button>
           <p className={`status-msg mt-3 text-xs ${yolo.runtime.phase}`}>{yolo.runtime.message}</p>
+        </section>
+
+        <section className="panel-section stagger-2 upload-section">
+          <div className="section-title">
+            <span>Image Upload</span>
+            {yolo.hasImage && (
+              <span className="status-pill done">Loaded</span>
+            )}
+          </div>
+          <Dropzone disabled={yolo.isBusy} isBusy={yolo.isBusy} onFile={onUpload} hasImage={yolo.hasImage} inputId="sidebar-upload-input">
+            <label
+              htmlFor="sidebar-upload-input"
+              className={`sidebar-upload-btn ${yolo.isBusy ? "disabled" : ""}`}
+            >
+              <Icon name="upload" size={20} />
+              <span>{yolo.hasImage ? "Change Image" : "Upload Image"}</span>
+              <span className="sidebar-upload-hint">or drag & drop</span>
+            </label>
+          </Dropzone>
         </section>
 
         <section className="panel-section stagger-3">
