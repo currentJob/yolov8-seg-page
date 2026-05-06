@@ -9,6 +9,7 @@ function formatPercent(value) {
 
 const MODELS = [
   { id: "yolov8-seg-half.onnx", name: "Fast Engine", desc: "FP16 / Speed Optimized", icon: "zap" },
+  { id: "yolov8m-seg.onnx", name: "Fast Engine", desc: "FP16 / Speed Optimized", icon: "target" },
   { id: "yolov8-seg.onnx", name: "Accurate Engine", desc: "FP32 / Precision Focused", icon: "target" }
 ];
 
