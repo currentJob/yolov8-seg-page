@@ -8,6 +8,7 @@ const initialRuntime = {
   protoShape: null,
   imageName: null,
   imageSize: null,
+  ep: null,
 };
 
 function createWorker() {
@@ -56,6 +57,7 @@ export function useYoloSeg(canvasRef, settings, modelName = "yolov8-seg-half.onn
         setRuntime((current) => ({
           ...current,
           phase: "ready",
+          ep: event.data.ep ?? current.ep,
           message: "모델 로드 완료. 이미지를 업로드하거나 드래그하세요.",
         }));
         return;
@@ -86,6 +88,7 @@ export function useYoloSeg(canvasRef, settings, modelName = "yolov8-seg-half.onn
             elapsed: result.elapsed,
             protoShape: result.protoShape,
             imageSize: result.imageSize,
+            ep: result.ep ?? current.ep,
             message: `${result.detections.length}개 객체를 감지했습니다.`,
           }));
         });

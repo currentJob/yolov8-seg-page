@@ -73,6 +73,11 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
 
             <div className="model-selector-footer">
               <span>{MODELS[activeIndex].tag}</span>
+              {yolo.runtime.ep && (
+                <span className={`ep-badge ${yolo.runtime.ep}`}>
+                  {yolo.runtime.ep === "webgpu" ? "GPU" : "CPU"}
+                </span>
+              )}
               <span>YOLOv8</span>
             </div>
           </div>

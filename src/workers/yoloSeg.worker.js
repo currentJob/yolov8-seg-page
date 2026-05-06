@@ -39,6 +39,7 @@ function getInputSize(modelName) {
 let session = null;
 let sessionPromise = null;
 let currentModelName = null;
+let currentEp = null;
 
 function post(id, payload) {
   self.postMessage({ id, ...payload });
@@ -267,30 +268,47 @@ async function loadModel(id, modelName = "yolov8-seg-half.onnx") {
   const targetUrl = `${import.meta.env.BASE_URL}models/${modelName}`;
 
   if (session && currentModelName === modelName) {
-    if (id !== undefined) post(id, { type: "loaded" });
+    if (id !== undefined) post(id, { type: "loaded", ep: currentEp });
     return;
   }
 
   if (sessionPromise && currentModelName === modelName) {
     await sessionPromise;
-    if (id !== undefined) post(id, { type: "loaded" });
+    if (id !== undefined) post(id, { type: "loaded", ep: currentEp });
     return;
   }
 
-  // 이전 모델 로딩이 진행 중이라면 완료될 때까지 기다립니다.
   if (sessionPromise) {
-    try { await sessionPromise; } catch (e) {}
+    try { await sessionPromise; } catch (_) {}
   }
 
   session = null;
   currentModelName = modelName;
+  currentEp = null;
 
   sessionPromise = (async () => {
     ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/";
+
+    // 1순위: WebGPU
+    if (self.navigator?.gpu) {
+      try {
+        session = await ort.InferenceSession.create(targetUrl, {
+          executionProviders: ["webgpu"],
+          graphOptimizationLevel: "all",
+        });
+        currentEp = "webgpu";
+        return;
+      } catch (_) {
+        session = null;
+      }
+    }
+
+    // 폴백: WASM CPU
     session = await ort.InferenceSession.create(targetUrl, {
       executionProviders: ["wasm"],
       graphOptimizationLevel: "all",
     });
+    currentEp = "wasm";
   })();
 
   try {
@@ -298,12 +316,13 @@ async function loadModel(id, modelName = "yolov8-seg-half.onnx") {
   } catch (err) {
     sessionPromise = null;
     currentModelName = null;
+    currentEp = null;
     throw err;
   } finally {
     sessionPromise = null;
   }
 
-  if (id !== undefined) post(id, { type: "loaded" });
+  if (id !== undefined) post(id, { type: "loaded", ep: currentEp });
 }
 
 async function runImage(id, bitmap, settings, modelName = "yolov8-seg-half.onnx") {
@@ -345,6 +364,7 @@ async function runImage(id, bitmap, settings, modelName = "yolov8-seg-half.onnx"
           bitmap: resultBitmap,
           imageSize: `${resultBitmap.width} x ${resultBitmap.height}`,
           protoShape: proto ? proto.dims.join(" x ") : "없음",
+          ep: currentEp,
         },
       },
       [resultBitmap]
