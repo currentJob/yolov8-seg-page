@@ -39,6 +39,7 @@ function getInputSize(modelName) {
 let session = null;
 let sessionPromise = null;
 let currentModelName = null;
+let currentPreferredEp = null;
 let currentEp = null;
 
 function post(id, payload) {
@@ -264,15 +265,47 @@ function validatePrimaryOutput(output) {
   }
 }
 
-async function loadModel(id, modelName = "yolov8-seg-half.onnx") {
+async function tryWebGPUSession(targetUrl) {
+  if (!self.navigator?.gpu) return null;
+  const adapter = await self.navigator.gpu.requestAdapter();
+  if (!adapter) return null;
+
+  const hasShaderF16 = adapter.features.has("shader-f16");
+  const webgpuEp = { name: "webgpu", preferredLayout: "NHWC" };
+  const epLabel = hasShaderF16 ? "webgpu-f16" : "webgpu-f32";
+
+  // 1-a. Graph Capture
+  try {
+    const s = await ort.InferenceSession.create(targetUrl, {
+      executionProviders: [webgpuEp],
+      graphOptimizationLevel: "all",
+      enableGraphCapture: true,
+    });
+    return { session: s, ep: epLabel };
+  } catch (_) {}
+
+  // 1-b. Mixed EP (WebGPU 미지원 op → WASM 자동 라우팅)
+  try {
+    const s = await ort.InferenceSession.create(targetUrl, {
+      executionProviders: [webgpuEp, "wasm"],
+      graphOptimizationLevel: "all",
+    });
+    return { session: s, ep: epLabel };
+  } catch (_) {}
+
+  return null;
+}
+
+async function loadModel(id, modelName = "yolov8-seg-half.onnx", preferredEp = "auto") {
   const targetUrl = `${import.meta.env.BASE_URL}models/${modelName}`;
 
-  if (session && currentModelName === modelName) {
+  // 모델 + EP 선택 모두 동일하면 재사용
+  if (session && currentModelName === modelName && currentPreferredEp === preferredEp) {
     if (id !== undefined) post(id, { type: "loaded", ep: currentEp });
     return;
   }
 
-  if (sessionPromise && currentModelName === modelName) {
+  if (sessionPromise && currentModelName === modelName && currentPreferredEp === preferredEp) {
     await sessionPromise;
     if (id !== undefined) post(id, { type: "loaded", ep: currentEp });
     return;
@@ -284,56 +317,37 @@ async function loadModel(id, modelName = "yolov8-seg-half.onnx") {
 
   session = null;
   currentModelName = modelName;
+  currentPreferredEp = preferredEp;
   currentEp = null;
 
   sessionPromise = (async () => {
     ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/";
     ort.env.logLevel = "error";
-    // SharedArrayBuffer가 있을 때만 멀티스레드 활성화 (COOP/COEP 헤더 필요)
     ort.env.wasm.numThreads = typeof SharedArrayBuffer !== "undefined"
       ? Math.min(4, self.navigator?.hardwareConcurrency ?? 4)
       : 1;
 
-    // ── 1순위: WebGPU ──────────────────────────────────────────────────────
-    if (self.navigator?.gpu) {
-      try {
-        const adapter = await self.navigator.gpu.requestAdapter();
-        if (adapter) {
-          const hasShaderF16 = adapter.features.has("shader-f16");
-          const webgpuEp = { name: "webgpu", preferredLayout: "NHWC" };
-          const epLabel = hasShaderF16 ? "webgpu-f16" : "webgpu-f32";
-
-          // 1-a. Graph Capture: 정적 입력 shape + 모든 op가 WebGPU일 때 GPU 커맨드 재사용
-          try {
-            session = await ort.InferenceSession.create(targetUrl, {
-              executionProviders: [webgpuEp],
-              graphOptimizationLevel: "all",
-              enableGraphCapture: true,
-            });
-            currentEp = epLabel;
-            return;
-          } catch (_) {
-            session = null;
-          }
-
-          // 1-b. Mixed EP: WebGPU 미지원 op는 WASM으로 자동 라우팅 (graph capture 없음)
-          try {
-            session = await ort.InferenceSession.create(targetUrl, {
-              executionProviders: [webgpuEp, "wasm"],
-              graphOptimizationLevel: "all",
-            });
-            currentEp = epLabel;
-            return;
-          } catch (_) {
-            session = null;
-          }
-        }
-      } catch (_) {
-        session = null;
-      }
+    // ── GPU 강제 선택 ──────────────────────────────────────────────────────
+    if (preferredEp === "gpu") {
+      const result = await tryWebGPUSession(targetUrl);
+      if (result) { session = result.session; currentEp = result.ep; return; }
+      // GPU 사용 불가 → WASM 폴백 (강제 선택이어도 에러보다 폴백이 UX상 낫다)
     }
 
-    // ── 2순위 (폴백): WASM CPU — FP16 모델도 FP32 승격 연산 ──────────────
+    // ── CPU 강제 선택 ─────────────────────────────────────────────────────
+    if (preferredEp === "cpu") {
+      session = await ort.InferenceSession.create(targetUrl, {
+        executionProviders: ["wasm"],
+        graphOptimizationLevel: "all",
+      });
+      currentEp = "wasm";
+      return;
+    }
+
+    // ── Auto: WebGPU 우선 시도, 실패 시 WASM ─────────────────────────────
+    const result = await tryWebGPUSession(targetUrl);
+    if (result) { session = result.session; currentEp = result.ep; return; }
+
     session = await ort.InferenceSession.create(targetUrl, {
       executionProviders: ["wasm"],
       graphOptimizationLevel: "all",
@@ -346,6 +360,7 @@ async function loadModel(id, modelName = "yolov8-seg-half.onnx") {
   } catch (err) {
     sessionPromise = null;
     currentModelName = null;
+    currentPreferredEp = null;
     currentEp = null;
     throw err;
   } finally {
@@ -355,12 +370,16 @@ async function loadModel(id, modelName = "yolov8-seg-half.onnx") {
   if (id !== undefined) post(id, { type: "loaded", ep: currentEp });
 }
 
-async function runImage(id, bitmap, settings, modelName = "yolov8-seg-half.onnx") {
-  if (!session || currentModelName !== modelName) {
-    if (sessionPromise && currentModelName === modelName) {
+async function runImage(id, bitmap, settings, modelName = "yolov8-seg-half.onnx", preferredEp = "auto") {
+  const needsLoad = !session
+    || currentModelName !== modelName
+    || currentPreferredEp !== preferredEp;
+
+  if (needsLoad) {
+    if (sessionPromise && currentModelName === modelName && currentPreferredEp === preferredEp) {
       await sessionPromise;
     } else {
-      await loadModel(undefined, modelName);
+      await loadModel(undefined, modelName, preferredEp);
     }
   }
 
@@ -417,24 +436,21 @@ async function runImage(id, bitmap, settings, modelName = "yolov8-seg-half.onnx"
 }
 
 self.onmessage = async (event) => {
-  const { id, type, file, bitmap, settings, modelName } = event.data;
+  const { id, type, file, bitmap, settings, modelName, preferredEp = "auto" } = event.data;
 
   try {
     if (type === "load") {
-      await loadModel(id, modelName);
+      await loadModel(id, modelName, preferredEp);
       return;
     }
 
     if (type === "run") {
-      // bitmap이 없으면 file로부터 새로 생성 (안정성 폴백)
       let targetBitmap = bitmap;
       if (!targetBitmap && file) {
         targetBitmap = await createImageBitmap(file);
       }
-      
       if (!targetBitmap) throw new Error("분석할 이미지가 없습니다.");
-      
-      await runImage(id, targetBitmap, settings, modelName);
+      await runImage(id, targetBitmap, settings, modelName, preferredEp);
     }
   } catch (error) {
     post(id, {
