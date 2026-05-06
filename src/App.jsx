@@ -70,7 +70,7 @@ export default function App() {
 
   const handleHistoryClick = async (item) => {
     try {
-      await yolo.restoreHistory(item);
+      await yolo.restoreResult(item);
       setIsComparing(false);
     } catch (err) {
       console.error("Failed to restore history", err);
