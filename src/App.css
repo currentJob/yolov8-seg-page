@@ -1101,91 +1101,140 @@ input[type="range"]::-webkit-scrollbar-thumb {
   background-position: center;
 }
 
-/* Responsive */
+/* ─── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .sidebar {
-    width: 300px;
-  }
+  .sidebar { width: 300px; }
 }
 
+/* ─── 모바일 탭 바 (데스크톱에선 숨김) ───────────────────────── */
+.mobile-tab-bar { display: none; }
+
 @media (max-width: 768px) {
-  /* 전체 컨테이너: 고정 높이·overflow:hidden 해제 → 페이지 스크롤 허용 */
+  /* html, body { overflow: hidden } 유지 → 탭 기반으로 스크롤 문제 근본 해결 */
+
   .app-container {
     flex-direction: column;
-    height: auto;
-    min-height: 100svh; /* 모바일 브라우저 UI 높이 고려한 동적 뷰포트 */
-    overflow-x: hidden;
-    overflow-y: visible;
+    height: 100svh;       /* 모바일 브라우저 UI 제외한 실제 뷰포트 */
+    overflow: hidden;
   }
 
-  /* 사이드바: 내부 스크롤 제거, 콘텐츠 전체 노출 */
+  /* 모바일에서 활성 탭이 아닌 패널은 숨김 */
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  /* ── Controls 탭: 사이드바 전체 화면 ── */
   .sidebar {
     width: 100%;
-    height: auto;
-    max-height: none;
+    height: 100%;
     border-right: none;
-    border-bottom: 1px solid var(--border);
-    box-shadow: none;
-    overflow: visible;
+    border-bottom: none;
+    overflow: hidden;     /* sidebar-content 내부 스크롤 유지 */
   }
 
   .sidebar-header {
-    padding: 20px 16px 12px;
+    padding: 16px 16px 10px;
+    flex-shrink: 0;
   }
 
-  .sidebar-header h1 {
-    font-size: 22px;
-  }
+  .sidebar-header h1 { font-size: 22px; }
 
   .sidebar-content {
-    overflow: visible;
-    max-height: none;
-    padding: 0 12px 16px;
-    gap: 16px;
+    flex: 1;
+    overflow-y: auto;      /* Controls 탭 내부 스크롤 */
+    padding: 0 12px 80px;  /* 하단 탭 바 높이만큼 여백 */
+    gap: 14px;
   }
 
-  /* 메인 영역: 고정 높이·overflow:hidden 해제 */
+  /* ── Workspace 탭: 메인 전체 화면 ── */
   .main-content {
-    overflow: visible;
-    min-height: 70vw;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
-  /* 캔버스 영역 */
+  .top-bar {
+    padding: 0 12px;
+    height: 48px;
+    flex-shrink: 0;
+  }
+
   .canvas-container {
-    padding: 12px;
-    overflow: visible;
-    min-height: 60vw;
+    flex: 1;
+    padding: 10px;
+    overflow: hidden;
   }
 
   .result-canvas {
-    max-height: 70vw;
+    max-height: 100%;
   }
 
-  /* TopBar */
-  .top-bar {
-    padding: 0 12px;
-    height: 52px;
-  }
-
-  /* 히스토리 트레이 */
   .history-tray {
-    height: 110px;
-    padding: 10px 12px;
+    height: 100px;
+    padding: 8px 12px;
+    flex-shrink: 0;
   }
 
   .history-item {
-    min-width: 80px;
-    height: 80px;
+    min-width: 72px;
+    height: 72px;
   }
 
-  /* 모델 셀렉터 padding 조정 */
-  .model-selector-option {
-    padding: 10px 0;
+  /* ── 하단 탭 바 ── */
+  .mobile-tab-bar {
+    display: flex;
+    height: 60px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    z-index: 100;
   }
+
+  .mobile-tab-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    position: relative;
+    transition: color 0.2s ease;
+  }
+
+  .mobile-tab-btn.active {
+    color: var(--accent);
+  }
+
+  .mobile-tab-btn.active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 20%;
+    right: 20%;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 0 0 2px 2px;
+  }
+
+  /* 알림 점 (모델 미로드, 추론 중 등) */
+  .mobile-tab-dot {
+    position: absolute;
+    top: 8px;
+    right: calc(50% - 16px);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #f59e0b;
+  }
+
+  /* 모델 셀렉터 padding 축소 */
+  .model-selector-option { padding: 10px 0; }
 
   /* EP 셀렉터 */
-  .ep-selector-group {
-    flex-wrap: wrap;
-    gap: 6px;
-  }
+  .ep-selector-group { flex-wrap: wrap; gap: 6px; }
 }

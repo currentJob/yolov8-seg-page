@@ -5,6 +5,7 @@ import { useKeyboard } from "./hooks/useKeyboard";
 import { Sidebar } from "./components/layout/Sidebar";
 import { TopBar } from "./components/layout/TopBar";
 import { CanvasWorkspace } from "./components/workspace/CanvasWorkspace";
+import { Icon } from "./components/ui/Icon";
 import "./App.css";
 
 const DEFAULT_SETTINGS = {
@@ -34,6 +35,7 @@ export default function App() {
   });
   
   const [selectedModel, setSelectedModel] = useState("yolov8-seg-half.onnx");
+  const [mobileTab, setMobileTab] = useState("workspace");
   const [preferredEp, setPreferredEp] = useState(
     () => localStorage.getItem("preferredEp") || "auto"
   );
@@ -96,10 +98,11 @@ export default function App() {
         preferredEp={preferredEp}
         setPreferredEp={updatePreferredEp}
         onUpload={yolo.runImage}
+        mobileHidden={mobileTab !== "controls"}
       />
 
-      <main className="main-content">
-        <TopBar 
+      <main className={`main-content${mobileTab !== "workspace" ? " mobile-hidden" : ""}`}>
+        <TopBar
           yolo={yolo}
           isComparing={isComparing}
           setIsComparing={setIsComparing}
@@ -107,7 +110,7 @@ export default function App() {
           toggleTheme={toggleTheme}
         />
 
-        <CanvasWorkspace 
+        <CanvasWorkspace
           yolo={yolo}
           canvasRef={canvasRef}
           compareCanvasRef={compareCanvasRef}
@@ -121,8 +124,8 @@ export default function App() {
             <div className="history-label">Recent</div>
             <div className="flex gap-4 overflow-x-auto pb-2 w-full max-w-full">
               {history.map(item => (
-                <div 
-                  key={item.id} 
+                <div
+                  key={item.id}
                   className={`history-item ${yolo.runtime.imageName === item.name ? "active" : ""}`}
                   onClick={() => handleHistoryClick(item)}
                 >
@@ -133,6 +136,30 @@ export default function App() {
           </footer>
         )}
       </main>
+
+      {/* 모바일 전용 하단 탭 바 */}
+      <nav className="mobile-tab-bar">
+        <button
+          className={`mobile-tab-btn${mobileTab === "workspace" ? " active" : ""}`}
+          onClick={() => setMobileTab("workspace")}
+        >
+          <Icon name="eye" size={20} />
+          <span>Workspace</span>
+          {yolo.isBusy && mobileTab !== "workspace" && (
+            <span className="mobile-tab-dot" />
+          )}
+        </button>
+        <button
+          className={`mobile-tab-btn${mobileTab === "controls" ? " active" : ""}`}
+          onClick={() => setMobileTab("controls")}
+        >
+          <Icon name="tool" size={20} />
+          <span>Controls</span>
+          {!yolo.isReady && (
+            <span className="mobile-tab-dot" />
+          )}
+        </button>
+      </nav>
     </div>
   );
 }
