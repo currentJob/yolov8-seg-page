@@ -288,29 +288,52 @@ async function loadModel(id, modelName = "yolov8-seg-half.onnx") {
 
   sessionPromise = (async () => {
     ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/";
-    ort.env.logLevel = "error"; // warning 레벨 ORT 로그 억제 (shape ops CPU 배정 등 정상 동작)
+    ort.env.logLevel = "error";
+    // SharedArrayBuffer가 있을 때만 멀티스레드 활성화 (COOP/COEP 헤더 필요)
+    ort.env.wasm.numThreads = typeof SharedArrayBuffer !== "undefined"
+      ? Math.min(4, self.navigator?.hardwareConcurrency ?? 4)
+      : 1;
 
-    // 1순위: WebGPU
+    // ── 1순위: WebGPU ──────────────────────────────────────────────────────
     if (self.navigator?.gpu) {
       try {
         const adapter = await self.navigator.gpu.requestAdapter();
         if (adapter) {
-          // shader-f16 지원 여부: 있으면 GPU가 FP16 네이티브 연산 (빠르지만 정밀도 tradeoff)
-          //                       없으면 WebGPU EP가 내부적으로 FP32 연산 (정밀도 손실 없음)
           const hasShaderF16 = adapter.features.has("shader-f16");
-          session = await ort.InferenceSession.create(targetUrl, {
-            executionProviders: [{ name: "webgpu", preferredLayout: "NHWC" }],
-            graphOptimizationLevel: "all",
-          });
-          currentEp = hasShaderF16 ? "webgpu-f16" : "webgpu-f32";
-          return;
+          const webgpuEp = { name: "webgpu", preferredLayout: "NHWC" };
+          const epLabel = hasShaderF16 ? "webgpu-f16" : "webgpu-f32";
+
+          // 1-a. Graph Capture: 정적 입력 shape + 모든 op가 WebGPU일 때 GPU 커맨드 재사용
+          try {
+            session = await ort.InferenceSession.create(targetUrl, {
+              executionProviders: [webgpuEp],
+              graphOptimizationLevel: "all",
+              enableGraphCapture: true,
+            });
+            currentEp = epLabel;
+            return;
+          } catch (_) {
+            session = null;
+          }
+
+          // 1-b. Mixed EP: WebGPU 미지원 op는 WASM으로 자동 라우팅 (graph capture 없음)
+          try {
+            session = await ort.InferenceSession.create(targetUrl, {
+              executionProviders: [webgpuEp, "wasm"],
+              graphOptimizationLevel: "all",
+            });
+            currentEp = epLabel;
+            return;
+          } catch (_) {
+            session = null;
+          }
         }
       } catch (_) {
         session = null;
       }
     }
 
-    // 폴백: WASM CPU (FP16 모델도 내부적으로 FP32 승격 연산 → 정밀도 우수)
+    // ── 2순위 (폴백): WASM CPU — FP16 모델도 FP32 승격 연산 ──────────────
     session = await ort.InferenceSession.create(targetUrl, {
       executionProviders: ["wasm"],
       graphOptimizationLevel: "all",
@@ -344,13 +367,15 @@ async function runImage(id, bitmap, settings, modelName = "yolov8-seg-half.onnx"
   const inputSize = getInputSize(modelName);
 
   try {
+    const t0 = performance.now();
     const { tensor, letterbox } = imageToTensor(bitmap, inputSize);
-    const inputName = session.inputNames[0];
-    const startedAt = performance.now();
-    const outputs = await session.run({ [inputName]: tensor });
-    const elapsed = performance.now() - startedAt;
-    const output = outputs[session.outputNames[0]];
+    const t1 = performance.now();
 
+    const inputName = session.inputNames[0];
+    const outputs = await session.run({ [inputName]: tensor });
+    const t2 = performance.now();
+
+    const output = outputs[session.outputNames[0]];
     validatePrimaryOutput(output);
 
     const proto = findProtoOutput(outputs);
@@ -358,8 +383,16 @@ async function runImage(id, bitmap, settings, modelName = "yolov8-seg-half.onnx"
     const classNames = getClassNames(classCount);
     const detections = parseDetections(output, bitmap.width, bitmap.height, letterbox, settings);
     const resultBitmap = drawResult(bitmap, detections, proto, letterbox, settings, inputSize, classNames);
+    const t3 = performance.now();
 
     bitmap.close();
+
+    const timings = {
+      preprocess:  Math.round(t1 - t0),
+      inference:   Math.round(t2 - t1),
+      postprocess: Math.round(t3 - t2),
+      total:       Math.round(t3 - t0),
+    };
 
     self.postMessage(
       {
@@ -367,7 +400,8 @@ async function runImage(id, bitmap, settings, modelName = "yolov8-seg-half.onnx"
         type: "result",
         result: {
           detections,
-          elapsed,
+          elapsed: timings.inference,
+          timings,
           bitmap: resultBitmap,
           imageSize: `${resultBitmap.width} x ${resultBitmap.height}`,
           protoShape: proto ? proto.dims.join(" x ") : "없음",
