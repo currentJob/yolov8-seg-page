@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import { MODEL_URL } from "../lib/yoloSeg";
 
 const initialRuntime = {
@@ -20,6 +20,7 @@ export function useYoloSeg(canvasRef, settings, modelName = "yolov8-seg-half.onn
   const workerRef = useRef(null);
   const requestIdRef = useRef(0);
   const lastFileRef = useRef(null);
+  const pendingBitmapRef = useRef(null);
   const [runtime, setRuntime] = useState(initialRuntime);
   const [detections, setDetections] = useState([]);
   const [hasImage, setHasImage] = useState(false);
@@ -69,9 +70,12 @@ export function useYoloSeg(canvasRef, settings, modelName = "yolov8-seg-half.onn
           const ctx = canvas.getContext("2d");
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(result.bitmap, 0, 0);
+          result.bitmap.close();
+        } else {
+          // 캔버스가 아직 마운트되지 않은 경우 (첫 이미지) 비트맵을 보관
+          if (pendingBitmapRef.current) pendingBitmapRef.current.close();
+          pendingBitmapRef.current = result.bitmap;
         }
-
-        result.bitmap.close();
 
         startTransition(() => {
           setHasImage(true);
@@ -102,6 +106,22 @@ export function useYoloSeg(canvasRef, settings, modelName = "yolov8-seg-half.onn
       workerRef.current = null;
     };
   }, [canvasRef]);
+
+  // 캔버스가 마운트된 직후 보류 중인 비트맵을 그린다
+  useLayoutEffect(() => {
+    if (!hasImage || !canvasRef.current || !pendingBitmapRef.current) return;
+
+    const canvas = canvasRef.current;
+    const bitmap = pendingBitmapRef.current;
+    pendingBitmapRef.current = null;
+
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 0, 0);
+    bitmap.close();
+  }, [hasImage, canvasRef]);
 
   const postWorkerMessage = useCallback((message) => {
     const worker = workerRef.current;
