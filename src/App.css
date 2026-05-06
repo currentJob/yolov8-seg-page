@@ -277,10 +277,18 @@
   text-transform: uppercase;
 }
 
-.ep-badge.webgpu {
+/* GPU F32: 정밀도 손실 없는 WebGPU (shader-f16 미지원 GPU) */
+.ep-badge.webgpu-f32 {
   background: rgba(34, 197, 94, 0.15);
   color: rgb(34, 197, 94);
   box-shadow: 0 0 8px rgba(34, 197, 94, 0.25);
+}
+
+/* GPU F16: 네이티브 FP16 WebGPU (빠르지만 정밀도 tradeoff) */
+.ep-badge.webgpu-f16 {
+  background: rgba(251, 191, 36, 0.15);
+  color: rgb(251, 191, 36);
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.2);
 }
 
 .ep-badge.wasm {

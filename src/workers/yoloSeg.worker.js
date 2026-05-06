@@ -292,18 +292,24 @@ async function loadModel(id, modelName = "yolov8-seg-half.onnx") {
     // 1순위: WebGPU
     if (self.navigator?.gpu) {
       try {
-        session = await ort.InferenceSession.create(targetUrl, {
-          executionProviders: ["webgpu"],
-          graphOptimizationLevel: "all",
-        });
-        currentEp = "webgpu";
-        return;
+        const adapter = await self.navigator.gpu.requestAdapter();
+        if (adapter) {
+          // shader-f16 지원 여부: 있으면 GPU가 FP16 네이티브 연산 (빠르지만 정밀도 tradeoff)
+          //                       없으면 WebGPU EP가 내부적으로 FP32 연산 (정밀도 손실 없음)
+          const hasShaderF16 = adapter.features.has("shader-f16");
+          session = await ort.InferenceSession.create(targetUrl, {
+            executionProviders: [{ name: "webgpu", preferredLayout: "NHWC" }],
+            graphOptimizationLevel: "all",
+          });
+          currentEp = hasShaderF16 ? "webgpu-f16" : "webgpu-f32";
+          return;
+        }
       } catch (_) {
         session = null;
       }
     }
 
-    // 폴백: WASM CPU
+    // 폴백: WASM CPU (FP16 모델도 내부적으로 FP32 승격 연산 → 정밀도 우수)
     session = await ort.InferenceSession.create(targetUrl, {
       executionProviders: ["wasm"],
       graphOptimizationLevel: "all",

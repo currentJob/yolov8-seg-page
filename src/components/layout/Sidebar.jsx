@@ -19,6 +19,18 @@ const MODELS = [
 
 const THUMB_LEFTS = ["4px", "calc(33.333% + 1.333px)", "calc(66.667% - 1.333px)"];
 
+const EP_LABEL = {
+  "webgpu-f16": "GPU F16",
+  "webgpu-f32": "GPU F32",
+  "wasm": "CPU",
+};
+
+const EP_TOOLTIP = {
+  "webgpu-f16": "WebGPU · FP16 네이티브 연산 (빠름, 정밀도 tradeoff)",
+  "webgpu-f32": "WebGPU · FP32 연산 (빠름, 정밀도 우수)",
+  "wasm": "WASM CPU · FP32 승격 연산 (정밀도 최우선)",
+};
+
 export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedModel, setSelectedModel, onUpload }) {
   const modelIndex = MODELS.findIndex(m => m.id === selectedModel);
   const activeIndex = modelIndex < 0 ? 0 : modelIndex;
@@ -74,8 +86,8 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
             <div className="model-selector-footer">
               <span>{MODELS[activeIndex].tag}</span>
               {yolo.runtime.ep && (
-                <span className={`ep-badge ${yolo.runtime.ep}`}>
-                  {yolo.runtime.ep === "webgpu" ? "GPU" : "CPU"}
+                <span className={`ep-badge ${yolo.runtime.ep}`} title={EP_TOOLTIP[yolo.runtime.ep]}>
+                  {EP_LABEL[yolo.runtime.ep]}
                 </span>
               )}
               <span>YOLOv8</span>
