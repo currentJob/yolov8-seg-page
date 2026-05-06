@@ -34,10 +34,13 @@ export default function App() {
   });
   
   const [selectedModel, setSelectedModel] = useState("yolov8-seg-half.onnx");
+  const [preferredEp, setPreferredEp] = useState(
+    () => localStorage.getItem("preferredEp") || "auto"
+  );
   const [isComparing, setIsComparing] = useState(false);
   const [compareRatio, setCompareRatio] = useState(0.5);
 
-  const yolo = useYoloSeg(canvasRef, settings, selectedModel);
+  const yolo = useYoloSeg(canvasRef, settings, selectedModel, preferredEp);
   const { history } = useHistory(yolo, canvasRef);
 
   useKeyboard({
@@ -67,6 +70,10 @@ export default function App() {
 
   const toggleTheme = () => setTheme((t) => (t === "light" ? "dark" : "light"));
   const updateSetting = (key, value) => setSettings((s) => ({ ...s, [key]: value }));
+  const updatePreferredEp = (ep) => {
+    setPreferredEp(ep);
+    localStorage.setItem("preferredEp", ep);
+  };
 
   const handleHistoryClick = async (item) => {
     try {
@@ -86,6 +93,8 @@ export default function App() {
         sliderMeta={sliderMeta}
         selectedModel={selectedModel}
         setSelectedModel={setSelectedModel}
+        preferredEp={preferredEp}
+        setPreferredEp={updatePreferredEp}
         onUpload={yolo.runImage}
       />
 

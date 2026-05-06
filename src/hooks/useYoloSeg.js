@@ -18,7 +18,7 @@ function createWorker() {
   });
 }
 
-export function useYoloSeg(canvasRef, settings, modelName = "yolov8-seg-half.onnx") {
+export function useYoloSeg(canvasRef, settings, modelName = "yolov8-seg-half.onnx", preferredEp = "auto") {
   const workerRef = useRef(null);
   const requestIdRef = useRef(0);
   const lastFileRef = useRef(null);
@@ -146,8 +146,8 @@ export function useYoloSeg(canvasRef, settings, modelName = "yolov8-seg-half.onn
       message: `Worker에서 ${modelName} 모델과 WASM 런타임을 준비하는 중입니다.`,
     }));
 
-    postWorkerMessage({ type: "load", modelName });
-  }, [postWorkerMessage, modelName]);
+    postWorkerMessage({ type: "load", modelName, preferredEp });
+  }, [postWorkerMessage, modelName, preferredEp]);
 
   const runImage = useCallback(
     async (file) => {
@@ -194,7 +194,7 @@ export function useYoloSeg(canvasRef, settings, modelName = "yolov8-seg-half.onn
       }
 
       if (needsLoad) {
-        postWorkerMessage({ type: "load", modelName });
+        postWorkerMessage({ type: "load", modelName, preferredEp });
       }
 
       const worker = workerRef.current;
@@ -202,17 +202,17 @@ export function useYoloSeg(canvasRef, settings, modelName = "yolov8-seg-half.onn
         requestIdRef.current += 1;
         const id = requestIdRef.current;
 
-        // File 객체를 직접 전송 (최초 업로드 시의 안정성 확보)
         worker.postMessage({
           id,
           type: "run",
           file,
           settings,
-          modelName
+          modelName,
+          preferredEp,
         });
       }
     },
-    [postWorkerMessage, settings, runtime.phase, modelName, canvasRef]
+    [postWorkerMessage, settings, runtime.phase, modelName, preferredEp, canvasRef]
   );
 
   const rerunLastImage = useCallback(() => {

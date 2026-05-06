@@ -31,7 +31,13 @@ const EP_TOOLTIP = {
   "wasm": "WASM CPU · FP32 승격 연산 (정밀도 최우선)",
 };
 
-export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedModel, setSelectedModel, onUpload }) {
+const EP_OPTIONS = [
+  { value: "auto", label: "Auto",  title: "GPU 우선 시도, 실패 시 CPU 폴백" },
+  { value: "gpu",  label: "GPU",   title: "WebGPU 강제 사용 (불가 시 CPU 폴백)" },
+  { value: "cpu",  label: "CPU",   title: "WASM CPU 강제 사용 (FP32, 정밀도 최우선)" },
+];
+
+export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedModel, setSelectedModel, preferredEp, setPreferredEp, onUpload }) {
   const modelIndex = MODELS.findIndex(m => m.id === selectedModel);
   const activeIndex = modelIndex < 0 ? 0 : modelIndex;
 
@@ -91,6 +97,23 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
                 </span>
               )}
               <span>YOLOv8</span>
+            </div>
+          </div>
+
+          <div className="ep-selector-group">
+            <span className="ep-selector-label">실행 환경</span>
+            <div className="ep-selector-track">
+              {EP_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  className={`ep-selector-btn ${preferredEp === opt.value ? "active" : ""}`}
+                  onClick={() => !yolo.isBusy && setPreferredEp(opt.value)}
+                  disabled={yolo.isBusy}
+                  title={opt.title}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
 
