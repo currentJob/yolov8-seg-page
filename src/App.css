@@ -259,12 +259,33 @@
 .model-selector-footer {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 8px 4px 0;
   font-size: 10px;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.2);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.ep-badge {
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ep-badge.webgpu {
+  background: rgba(34, 197, 94, 0.15);
+  color: rgb(34, 197, 94);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.25);
+}
+
+.ep-badge.wasm {
+  background: rgba(148, 163, 184, 0.12);
+  color: rgba(148, 163, 184, 0.7);
 }
 
 /* Sidebar Upload Button */
