@@ -1,7 +1,36 @@
 import * as ort from "onnxruntime-web";
 import { normalizedByteToFloat16, tensorDataToFloat32 } from "../lib/float16.js";
 
-const CLASS_NAMES = ["object"];
+const COCO_CLASS_NAMES = [
+  "person","bicycle","car","motorcycle","airplane","bus","train","truck","boat",
+  "traffic light","fire hydrant","stop sign","parking meter","bench","bird","cat",
+  "dog","horse","sheep","cow","elephant","bear","zebra","giraffe","backpack",
+  "umbrella","handbag","tie","suitcase","frisbee","skis","snowboard","sports ball",
+  "kite","baseball bat","baseball glove","skateboard","surfboard","tennis racket",
+  "bottle","wine glass","cup","fork","knife","spoon","bowl","banana","apple",
+  "sandwich","orange","broccoli","carrot","hot dog","pizza","donut","cake",
+  "chair","couch","potted plant","bed","dining table","toilet","tv","laptop",
+  "mouse","remote","keyboard","cell phone","microwave","oven","toaster","sink",
+  "refrigerator","book","clock","vase","scissors","teddy bear","hair drier","toothbrush",
+];
+
+function getClassNames(classCount) {
+  if (classCount === COCO_CLASS_NAMES.length) return COCO_CLASS_NAMES;
+  return Array.from({ length: classCount }, (_, i) => i === 0 ? "object" : `class ${i}`);
+}
+
+function hslToRgb(h, s, l) {
+  s /= 100; l /= 100;
+  const k = n => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
+}
+
+function classColor(classId) {
+  const hue = (classId * 137.508) % 360;
+  return hslToRgb(hue, 75, 55);
+}
 
 function getInputSize(modelName) {
   return modelName === "yolov8m-seg-half.onnx" ? 640 : 960;
@@ -147,7 +176,7 @@ function findProtoOutput(outputs) {
   return Object.values(outputs).find((tensor) => tensor.dims.length === 4 && tensor.dims[1] === 32);
 }
 
-function drawMask(ctx, detection, protoData, protoDims, imgW, imgH, letterbox, maskThreshold, inputSize) {
+function drawMask(ctx, detection, protoData, protoDims, imgW, imgH, letterbox, maskThreshold, inputSize, color) {
   if (!protoData || !protoDims) return;
 
   const [, maskDim, protoH, protoW] = protoDims;
@@ -174,9 +203,9 @@ function drawMask(ctx, detection, protoData, protoDims, imgW, imgH, letterbox, m
 
       if (sigmoid(value) > maskThreshold) {
         const imageIndex = (y * imgW + x) * 4;
-        maskImage.data[imageIndex] = 14;
-        maskImage.data[imageIndex + 1] = 165;
-        maskImage.data[imageIndex + 2] = 233;
+        maskImage.data[imageIndex]     = color[0];
+        maskImage.data[imageIndex + 1] = color[1];
+        maskImage.data[imageIndex + 2] = color[2];
         maskImage.data[imageIndex + 3] = 118;
       }
     }
@@ -186,7 +215,7 @@ function drawMask(ctx, detection, protoData, protoDims, imgW, imgH, letterbox, m
   ctx.drawImage(maskCanvas, 0, 0);
 }
 
-function drawResult(bitmap, detections, proto, letterbox, settings, inputSize) {
+function drawResult(bitmap, detections, proto, letterbox, settings, inputSize, classNames) {
   const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
   const ctx = canvas.getContext("2d");
   const protoData = proto ? tensorDataToFloat32(proto) : null;
@@ -195,21 +224,23 @@ function drawResult(bitmap, detections, proto, letterbox, settings, inputSize) {
   ctx.drawImage(bitmap, 0, 0);
 
   for (const detection of detections) {
-    drawMask(ctx, detection, protoData, protoDims, bitmap.width, bitmap.height, letterbox, settings.maskThreshold || 0.5, inputSize);
+    const color = classColor(detection.classId);
+    drawMask(ctx, detection, protoData, protoDims, bitmap.width, bitmap.height, letterbox, settings.maskThreshold || 0.5, inputSize, color);
   }
 
   for (const detection of detections) {
-    const label = `${CLASS_NAMES[detection.classId] ?? `class ${detection.classId}`} ${(
-      detection.score * 100
-    ).toFixed(1)}%`;
+    const name = classNames[detection.classId] ?? `class ${detection.classId}`;
+    const label = `${name} ${(detection.score * 100).toFixed(1)}%`;
+    const color = classColor(detection.classId);
+    const colorStr = `rgb(${color[0]},${color[1]},${color[2]})`;
     const boxW = detection.x2 - detection.x1;
     const boxH = detection.y2 - detection.y1;
     const textH = Math.max(24, bitmap.width / 34);
     const labelY = Math.max(0, detection.y1 - textH);
 
     ctx.lineWidth = Math.max(2, bitmap.width / 420);
-    ctx.strokeStyle = "#0ea5e9";
-    ctx.fillStyle = "#0ea5e9";
+    ctx.strokeStyle = colorStr;
+    ctx.fillStyle = colorStr;
     ctx.strokeRect(detection.x1, detection.y1, boxW, boxH);
 
     ctx.font = `600 ${Math.max(14, bitmap.width / 48)}px Inter, Arial, sans-serif`;
@@ -222,12 +253,13 @@ function drawResult(bitmap, detections, proto, letterbox, settings, inputSize) {
 }
 
 function validatePrimaryOutput(output) {
-  if (!output) {
-    throw new Error("모델의 기본 output을 찾을 수 없습니다.");
+  if (!output) throw new Error("모델의 기본 output을 찾을 수 없습니다.");
+  if (output.dims.length !== 3 || output.dims[0] !== 1) {
+    throw new Error(`예상 output shape는 [1, channels, anchors]인데 실제는 [${output.dims.join(", ")}]입니다.`);
   }
-
-  if (output.dims[1] !== 37) {
-    throw new Error(`예상 output은 [1, 37, anchors]인데 실제는 [${output.dims.join(", ")}]입니다.`);
+  const classCount = output.dims[1] - 4 - 32;
+  if (classCount < 1) {
+    throw new Error(`output channels(${output.dims[1]})가 너무 작습니다. 최소 37 (4+1+32)이어야 합니다.`);
   }
 }
 
@@ -296,8 +328,10 @@ async function runImage(id, bitmap, settings, modelName = "yolov8-seg-half.onnx"
     validatePrimaryOutput(output);
 
     const proto = findProtoOutput(outputs);
+    const classCount = output.dims[1] - 4 - 32;
+    const classNames = getClassNames(classCount);
     const detections = parseDetections(output, bitmap.width, bitmap.height, letterbox, settings);
-    const resultBitmap = drawResult(bitmap, detections, proto, letterbox, settings, inputSize);
+    const resultBitmap = drawResult(bitmap, detections, proto, letterbox, settings, inputSize, classNames);
 
     bitmap.close();
 
