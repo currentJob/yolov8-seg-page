@@ -169,6 +169,25 @@ export function useYoloSeg(canvasRef, settings, modelName = "yolov8-seg-half.onn
       const bitmap = await createImageBitmap(file);
       setOriginalBitmap(bitmap);
 
+      // 이미지를 즉시 캔버스에 표시하여 로딩 오버레이가 이미지 위에 나타나도록 함
+      const canvas = canvasRef.current;
+      if (canvas) {
+        // 캔버스가 이미 마운트된 경우 (이전 이미지가 있을 때) 직접 그린다
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(bitmap, 0, 0);
+        setHasImage(true);
+      } else {
+        // 첫 이미지: 캔버스가 아직 마운트되지 않은 경우
+        // originalBitmap과 별도로 pendingBitmapRef용 비트맵을 생성 (useLayoutEffect에서 close되므로)
+        const previewBitmap = await createImageBitmap(file);
+        if (pendingBitmapRef.current) pendingBitmapRef.current.close();
+        pendingBitmapRef.current = previewBitmap;
+        setHasImage(true);
+      }
+
       if (needsLoad) {
         postWorkerMessage({ type: "load", modelName });
       }
@@ -177,7 +196,7 @@ export function useYoloSeg(canvasRef, settings, modelName = "yolov8-seg-half.onn
       if (worker) {
         requestIdRef.current += 1;
         const id = requestIdRef.current;
-        
+
         // File 객체를 직접 전송 (최초 업로드 시의 안정성 확보)
         worker.postMessage({
           id,
@@ -188,7 +207,7 @@ export function useYoloSeg(canvasRef, settings, modelName = "yolov8-seg-half.onn
         });
       }
     },
-    [postWorkerMessage, settings, runtime.phase, modelName]
+    [postWorkerMessage, settings, runtime.phase, modelName, canvasRef]
   );
 
   const rerunLastImage = useCallback(() => {
