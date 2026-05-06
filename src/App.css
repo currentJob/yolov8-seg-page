@@ -1109,18 +1109,83 @@ input[type="range"]::-webkit-scrollbar-thumb {
 }
 
 @media (max-width: 768px) {
+  /* 전체 컨테이너: 고정 높이·overflow:hidden 해제 → 페이지 스크롤 허용 */
   .app-container {
     flex-direction: column;
+    height: auto;
+    min-height: 100svh; /* 모바일 브라우저 UI 높이 고려한 동적 뷰포트 */
+    overflow-x: hidden;
+    overflow-y: visible;
   }
 
+  /* 사이드바: 내부 스크롤 제거, 콘텐츠 전체 노출 */
   .sidebar {
     width: 100%;
     height: auto;
+    max-height: none;
     border-right: none;
     border-bottom: 1px solid var(--border);
+    box-shadow: none;
+    overflow: visible;
   }
 
+  .sidebar-header {
+    padding: 20px 16px 12px;
+  }
+
+  .sidebar-header h1 {
+    font-size: 22px;
+  }
+
+  .sidebar-content {
+    overflow: visible;
+    max-height: none;
+    padding: 0 12px 16px;
+    gap: 16px;
+  }
+
+  /* 메인 영역: 고정 높이·overflow:hidden 해제 */
+  .main-content {
+    overflow: visible;
+    min-height: 70vw;
+  }
+
+  /* 캔버스 영역 */
   .canvas-container {
-    padding: 20px;
+    padding: 12px;
+    overflow: visible;
+    min-height: 60vw;
+  }
+
+  .result-canvas {
+    max-height: 70vw;
+  }
+
+  /* TopBar */
+  .top-bar {
+    padding: 0 12px;
+    height: 52px;
+  }
+
+  /* 히스토리 트레이 */
+  .history-tray {
+    height: 110px;
+    padding: 10px 12px;
+  }
+
+  .history-item {
+    min-width: 80px;
+    height: 80px;
+  }
+
+  /* 모델 셀렉터 padding 조정 */
+  .model-selector-option {
+    padding: 10px 0;
+  }
+
+  /* EP 셀렉터 */
+  .ep-selector-group {
+    flex-wrap: wrap;
+    gap: 6px;
   }
 }
