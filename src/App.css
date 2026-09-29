@@ -1,7 +1,7 @@
 .app-container {
   display: flex;
   width: 100vw;
-  height: 100vh;
+  height: calc(100vh - 34px); /* 34px = 상단 프로젝트 바(index.html .cj-projects) */
   background: var(--bg);
   color: var(--text);
   overflow: hidden;
@@ -1114,7 +1114,7 @@ input[type="range"]::-webkit-scrollbar-thumb {
 
   .app-container {
     flex-direction: column;
-    height: 100svh;       /* 모바일 브라우저 UI 제외한 실제 뷰포트 */
+    height: calc(100svh - 34px); /* 모바일 실제 뷰포트 - 상단 프로젝트 바 */
     overflow: hidden;
   }
 
