@@ -24,7 +24,6 @@ export default function App() {
   const canvasRef = useRef(null);
   const compareCanvasRef = useRef(null);
   
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem("yoloSettings");
@@ -52,11 +51,6 @@ export default function App() {
   });
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  useEffect(() => {
     localStorage.setItem("yoloSettings", JSON.stringify(settings));
   }, [settings]);
 
@@ -70,7 +64,6 @@ export default function App() {
     }
   }, [isComparing, yolo.originalBitmap]);
 
-  const toggleTheme = () => setTheme((t) => (t === "light" ? "dark" : "light"));
   const updateSetting = (key, value) => setSettings((s) => ({ ...s, [key]: value }));
   const updatePreferredEp = (ep) => {
     setPreferredEp(ep);
@@ -106,8 +99,6 @@ export default function App() {
           yolo={yolo}
           isComparing={isComparing}
           setIsComparing={setIsComparing}
-          theme={theme}
-          toggleTheme={toggleTheme}
         />
 
         <CanvasWorkspace

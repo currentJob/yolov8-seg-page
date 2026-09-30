@@ -1,6 +1,6 @@
 import { Icon } from "../ui/Icon";
 
-export function TopBar({ yolo, isComparing, setIsComparing, theme, toggleTheme }) {
+export function TopBar({ yolo, isComparing, setIsComparing }) {
   return (
     <header className="workspace-header top-bar">
       <div className="workspace-title">
@@ -43,9 +43,6 @@ export function TopBar({ yolo, isComparing, setIsComparing, theme, toggleTheme }
             </button>
           </>
         )}
-        <button className="btn btn-secondary" onClick={toggleTheme}>
-          <Icon name={theme === "light" ? "moon" : "sun"} />
-        </button>
       </div>
     </header>
   );
