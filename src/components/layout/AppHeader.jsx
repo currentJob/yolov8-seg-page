@@ -1,4 +1,5 @@
 import { Icon } from "../ui/Icon";
+import { ThemeControls } from "./ThemeControls";
 
 const EP_LABEL = { "webgpu-f16": "GPU F16", "webgpu-f32": "GPU F32", wasm: "CPU" };
 
@@ -31,6 +32,7 @@ export function AppHeader({ yolo, isComparing, setIsComparing }) {
         </button>
       </nav>
       <div className="cj-header-actions">
+        <ThemeControls />
         <span className="cj-badge yolo-status" title="모델 상태"><Icon name="cpu" className="cj-ic" />{status}</span>
         <a className="cj-pill" href="https://github.com/currentJob/yolov8-seg-page" target="_blank" rel="noreferrer" aria-label="소스 코드 (GitHub)">
           <Icon name="github" className="cj-ic" /><span className="cj-label">소스</span>
