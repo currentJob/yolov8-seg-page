@@ -43,16 +43,10 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
 
   return (
     <aside className={`sidebar${mobileHidden ? " mobile-hidden" : ""}`}>
-      <header className="sidebar-header">
-        <p className="eyebrow">Vision AI Lab</p>
-        <h1>YOLOv8-Seg</h1>
-        <p>Real-time instance segmentation</p>
-      </header>
-
       <div className="sidebar-content">
         <section className="panel-section stagger-1">
           <div className="section-title">
-            <span>Model Engine</span>
+            <span className="section-label"><Icon name="cpu" size={16} />Model Engine</span>
             <span className={`status-pill ${yolo.runtime.phase}`}>
               {yolo.runtime.phase}
             </span>
@@ -130,7 +124,7 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
 
         <section className="panel-section stagger-2 upload-section">
           <div className="section-title">
-            <span>Image Upload</span>
+            <span className="section-label"><Icon name="upload" size={16} />Image Upload</span>
             {yolo.hasImage && <span className="status-pill done">Loaded</span>}
           </div>
           <Dropzone disabled={yolo.isBusy} isBusy={yolo.isBusy} onFile={onUpload} hasImage={yolo.hasImage} inputId="sidebar-upload-input">
@@ -147,7 +141,7 @@ export function Sidebar({ yolo, settings, updateSetting, sliderMeta, selectedMod
 
         <section className="panel-section stagger-3">
           <div className="section-title">
-            <span>Parameters</span>
+            <span className="section-label"><Icon name="tool" size={16} />Parameters</span>
             <button
               className="btn-ghost text-xs"
               onClick={yolo.rerunLastImage}

@@ -4,6 +4,7 @@ import { useHistory } from "./hooks/useHistory";
 import { useKeyboard } from "./hooks/useKeyboard";
 import { Sidebar } from "./components/layout/Sidebar";
 import { TopBar } from "./components/layout/TopBar";
+import { AppHeader } from "./components/layout/AppHeader";
 import { CanvasWorkspace } from "./components/workspace/CanvasWorkspace";
 import { Icon } from "./components/ui/Icon";
 import "./App.css";
@@ -80,6 +81,8 @@ export default function App() {
   };
 
   return (
+    <>
+    <AppHeader yolo={yolo} isComparing={isComparing} setIsComparing={setIsComparing} />
     <div className="app-container">
       <Sidebar
         yolo={yolo}
@@ -95,11 +98,7 @@ export default function App() {
       />
 
       <main className={`main-content${mobileTab !== "workspace" ? " mobile-hidden" : ""}`}>
-        <TopBar
-          yolo={yolo}
-          isComparing={isComparing}
-          setIsComparing={setIsComparing}
-        />
+        <TopBar yolo={yolo} />
 
         <CanvasWorkspace
           yolo={yolo}
@@ -152,5 +151,6 @@ export default function App() {
         </button>
       </nav>
     </div>
+    </>
   );
 }

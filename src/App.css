@@ -1,7 +1,7 @@
 .app-container {
   display: flex;
   width: 100vw;
-  height: calc(100vh - 34px); /* 34px = 상단 프로젝트 바(index.html .cj-projects) */
+  height: calc(100vh - 34px - 64px); /* 상단 프로젝트 바 34px + 앱 헤더 64px */
   background: var(--bg);
   color: var(--text);
   overflow: hidden;
@@ -1114,7 +1114,7 @@ input[type="range"]::-webkit-scrollbar-thumb {
 
   .app-container {
     flex-direction: column;
-    height: calc(100svh - 34px); /* 모바일 실제 뷰포트 - 상단 프로젝트 바 */
+    height: calc(100svh - 34px - 56px); /* 모바일 실제 뷰포트 - 프로젝트 바 - 앱 헤더 */
     overflow: hidden;
   }
 
@@ -1238,3 +1238,8 @@ input[type="range"]::-webkit-scrollbar-thumb {
   /* EP 셀렉터 */
   .ep-selector-group { flex-wrap: wrap; gap: 6px; }
 }
+/* 앱 헤더의 상태 표시는 좁은 화면에서 숨긴다(사이드바 Controls 탭에 같은 정보가 있다). */
+.yolo-status .cj-ic { width: 14px; height: 14px; }
+@media (max-width: 760px) { .yolo-status { display: none; } }
+.section-label { display: inline-flex; align-items: center; gap: 7px; }
+.section-label svg { color: var(--accent); }
